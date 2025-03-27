@@ -1,0 +1,27 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import LoginPage from '@/pages/LoginPage'
+import RegisterPage from '@/pages/employee/RegisterPage'
+// import EmployeeDashboard from './pages/employee/Dashboard'
+// import AdminDashboard from './pages/admin/Dashboard'
+import { ThemeProvider } from '@/components/theme-provider'
+import './App.css'
+import { ModeToggle } from '@/components/mode-toggle'
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ModeToggle />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          {/* <Route path="/employee/*" element={<EmployeeDashboard />} />
+          <Route path="/admin/*" element={<AdminDashboard />} /> */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
+  )
+}
+
+export default App
