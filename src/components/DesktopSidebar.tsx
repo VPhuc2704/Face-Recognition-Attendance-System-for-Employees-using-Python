@@ -8,6 +8,8 @@ import {
   Settings,
   Sun,
   Users,
+  User,
+  ClipboardList,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { ReactNode } from 'react'
@@ -25,10 +27,11 @@ interface DesktopSidebarProps {
   handleNavigation: (path: string) => void
   toggleTheme: () => void
   handleLogout: () => void
+  userRole: 'admin' | 'employee'
 }
 
-// Các mục menu chính
-const navItems: NavItem[] = [
+// Admin menu items
+const adminNavItems: NavItem[] = [
   {
     title: 'Trang chủ',
     path: '/admin',
@@ -61,18 +64,41 @@ const navItems: NavItem[] = [
   },
 ]
 
+// Employee menu items
+const employeeNavItems: NavItem[] = [
+  {
+    title: 'Trang chủ',
+    path: '/employee',
+    icon: <Home className="h-5 w-5" />,
+  },
+  {
+    title: 'Thông tin cá nhân',
+    path: '/employee/profile',
+    icon: <User className="h-5 w-5" />,
+  },
+  {
+    title: 'Lịch sử điểm danh',
+    path: '/employee/attendance',
+    icon: <ClipboardList className="h-5 w-5" />,
+  },
+]
+
 export default function DesktopSidebar({
   currentPath,
   theme,
   handleNavigation,
   toggleTheme,
   handleLogout,
+  userRole,
 }: DesktopSidebarProps) {
+  // Select the appropriate navigation items based on user role
+  const navItems = userRole === 'admin' ? adminNavItems : employeeNavItems
+
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700">
       <div className="flex items-center justify-center h-16 border-b dark:border-gray-700">
         <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-          Admin Dashboard
+          {userRole === 'admin' ? 'Admin Dashboard' : 'Employee Dashboard'}
         </h2>
       </div>
       <nav className="flex-1 pt-4 pb-4">

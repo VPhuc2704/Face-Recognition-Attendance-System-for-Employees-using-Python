@@ -11,7 +11,7 @@ import AdminHome from './AdminHome'
 import DesktopSidebar from '@/components/DesktopSidebar'
 import MobileSidebar from '@/components/MobileSidebar'
 
-export default function AdminDashboard() {
+export default function AdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
@@ -42,6 +42,7 @@ export default function AdminDashboard() {
         handleNavigation={handleNavigation}
         toggleTheme={toggleTheme}
         handleLogout={handleLogout}
+        userRole="admin"
       />
 
       {/* Mobile Header & Menu */}
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
           handleLogout={handleLogout}
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}
+          userRole="admin"
         />
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">

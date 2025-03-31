@@ -2,13 +2,16 @@ import {
   BarChart3,
   Calendar,
   Camera,
+  ClipboardList,
   Home,
   LogOut,
   Menu,
   Moon,
   Settings,
   Sun,
+  User,
   Users,
+  X,
 } from 'lucide-react'
 import { ReactNode } from 'react'
 import { Button } from './ui/button'
@@ -34,10 +37,11 @@ interface MobileSidebarProps {
   handleLogout: () => void
   isMobileMenuOpen: boolean
   setIsMobileMenuOpen: (isOpen: boolean) => void
+  userRole: 'admin' | 'employee'
 }
 
-// Các mục menu chính
-const navItems: NavItem[] = [
+// Admin menu items
+const adminNavItems: NavItem[] = [
   {
     title: 'Trang chủ',
     path: '/admin',
@@ -70,6 +74,25 @@ const navItems: NavItem[] = [
   },
 ]
 
+// Employee menu items
+const employeeNavItems: NavItem[] = [
+  {
+    title: 'Trang chủ',
+    path: '/employee',
+    icon: <Home className="h-5 w-5" />,
+  },
+  {
+    title: 'Thông tin cá nhân',
+    path: '/employee/profile',
+    icon: <User className="h-5 w-5" />,
+  },
+  {
+    title: 'Lịch sử điểm danh',
+    path: '/employee/attendance',
+    icon: <ClipboardList className="h-5 w-5" />,
+  },
+]
+
 export default function MobileSidebar({
   theme,
   handleNavigation,
@@ -77,54 +100,91 @@ export default function MobileSidebar({
   handleLogout,
   isMobileMenuOpen,
   setIsMobileMenuOpen,
+  userRole,
 }: MobileSidebarProps) {
+  // Select the appropriate navigation items based on user role
+  const navItems = userRole === 'admin' ? adminNavItems : employeeNavItems
   return (
-    <header className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-      <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-        Admin Dashboard
-      </h2>
-      <div className="flex items-center">
-        <Button variant="ghost" size="icon" onClick={toggleTheme}>
-          {theme === 'dark' ? (
-            <Sun className="h-5 w-5" />
-          ) : (
-            <Moon className="h-5 w-5" />
-          )}
+    <>
+      {/* Mobile Header */}
+      <header className="lg:hidden flex items-center justify-between h-16 p-4 border-b dark:border-gray-700">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+          {userRole === 'admin' ? 'Admin Dashboard' : 'Employee Dashboard'}
+        </h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <Menu className="h-6 w-6" />
         </Button>
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <SheetHeader>
-              <SheetTitle>Menu</SheetTitle>
-            </SheetHeader>
-            <nav className="flex flex-col gap-2 mt-8">
-              {navItems.map((item) => (
-                <Button
-                  key={item.path}
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => handleNavigation(item.path)}
-                >
-                  {item.icon}
-                  <span className="ml-3">{item.title}</span>
-                </Button>
-              ))}
+      </header>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50">
+          <div className="absolute top-0 right-0 w-64 h-full bg-white dark:bg-gray-800 shadow-lg">
+            <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                Menu
+              </h2>
               <Button
-                variant="outline"
-                className="w-full justify-start text-red-500 mt-4"
-                onClick={handleLogout}
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
-                <LogOut className="h-5 w-5 mr-2" />
-                Đăng xuất
+                <X className="h-6 w-6" />
               </Button>
+            </div>
+
+            <nav className="p-4">
+              <ul className="space-y-2">
+                {navItems.map((item) => (
+                  <li key={item.path}>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      onClick={() => handleNavigation(item.path)}
+                    >
+                      {item.icon}
+                      <span className="ml-3">{item.title}</span>
+                    </Button>
+                  </li>
+                ))}
+                <li className="pt-4 border-t dark:border-gray-700">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={toggleTheme}
+                  >
+                    {theme === 'dark' ? (
+                      <>
+                        <Sun className="h-5 w-5 mr-2" />
+                        Chế độ sáng
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="h-5 w-5 mr-2" />
+                        Chế độ tối
+                      </>
+                    )}
+                  </Button>
+                </li>
+                <li>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-red-500"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5 mr-2" />
+                    Đăng xuất
+                  </Button>
+                </li>
+              </ul>
             </nav>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </header>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
