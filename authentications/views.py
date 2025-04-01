@@ -9,20 +9,42 @@ from rest_framework.permissions import IsAuthenticated
 # from .utils import sendCodeToUser
 import jwt, datetime
 from django.conf import settings
+from rest_framework.parsers import MultiPartParser, FormParser
+
 
 class RegisterView(APIView):
+    parser_classes = [MultiPartParser, FormParser] 
     def post(self, request):
-        user_data = request.data
-        serializer = UserSerializer(data=user_data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            user = serializer.data
-            return Response({
-                'data': user,
-                'message':f'Created account successfully!'
-            }, status= status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        try:
+            # Chuẩn hóa dữ liệu từ form-data
+            data = {
+                'email': request.data['email'],
+                'firstName': request.data['firstName'],
+                'lastName': request.data['lastName'],
+                'password': request.data['password'],
+                'password2': request.data['password2'],
+                'employee': {
+                    'department': request.data['employee[department]'],
+                    'position': request.data['employee[position]'],
+                    'employeeImg': request.FILES['employee[employeeImg]']
+                }
+            }
+        # user_data = request.data
+        # serializer = UserSerializer(data=user_data)
+            serializer = UserSerializer(data=data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                user = serializer.data
+                return Response({
+                    'data': user,
+                    'message':f'Created account successfully!'
+                }, status= status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except KeyError as e:
+            return Response({'error': f'Thiếu trường bắt buộc: {str(e)}'}, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 
 class LoginView(APIView):
