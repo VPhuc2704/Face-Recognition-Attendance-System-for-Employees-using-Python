@@ -1,22 +1,23 @@
+from tokenize import TokenError
 from django.shortcuts import render
 from .serializers import UserSerializer, LoginSerializer, LogoutSerializer
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User
+from .models import User, BlacklistedToken
 from rest_framework.permissions import IsAuthenticated
 # from .utils import sendCodeToUser
 import jwt, datetime
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class RegisterView(APIView):
     parser_classes = [MultiPartParser, FormParser] 
     def post(self, request):
         try:
-            # Chuẩn hóa dữ liệu từ form-data
             data = {
                 'email': request.data['email'],
                 'firstName': request.data['firstName'],
@@ -57,8 +58,21 @@ class LoginView(APIView):
 class UserView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
+        user = request.user  # Lấy thông tin người dùng từ request
+
         data = {
-            'msg': 'successfully authenticated',
+            'message': 'Xác thực thành công',
+            'user_info': {
+                'id': user.id,
+                'firstName': user.firstName,
+                'lastName': user.lastName,
+                'email': user.email,
+                "date_joined": user.date_joined.strftime('%Y-%m-%d %H:%M:%S'),
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+                "role": user.role,
+            },
+            'is_authenticated': True,
         }
         return Response(data, status=status.HTTP_200_OK)
     
@@ -73,6 +87,3 @@ class LogoutView(APIView):
         response.delete_cookie('jwt')
         response.delete_cookie('refresh_token')
         return response
-
-
-

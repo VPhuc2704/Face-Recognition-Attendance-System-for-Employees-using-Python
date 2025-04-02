@@ -27,7 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
         password = attrs.get('password', "")
         password2 = attrs.get('password2', "")
         if password != password2:
-            raise serializers.ValidationError("Password does not match!")
+            raise serializers.ValidationError("Mật Khẩu không đúng!")
         return attrs
     
     def create(self, validated_data):
@@ -38,13 +38,14 @@ class UserSerializer(serializers.ModelSerializer):
             firstName = validated_data.get('firstName'),
             lastName = validated_data.get('lastName'),
             password = validated_data.get('password'),
+            role=validated_data.get('role', 'staff')
         )   
         department, _ = Department.objects.get_or_create(name=employee_data['department'])
         position, _ = Position.objects.get_or_create(name=employee_data['position'])
         # employeeImg = request.FILES.get('employee[employeeImg]') 
         employee_img = employee_data.get('employeeImg')
         if isinstance(employee_img, str):  # Nếu là chuỗi (không hợp lệ)
-            raise serializers.ValidationError({"employeeImg": "Invalid image format. Please upload an actual image file."})
+            raise serializers.ValidationError({"employeeImg": "Định dạng hình ảnh không hợp lệ. Vui lòng tải lên tệp hình ảnh thực tế."})
 
         Employee.objects.create(
             user=user,
@@ -60,10 +61,10 @@ class LoginSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=68, min_length=6, write_only=True)
     full_name = serializers.CharField(max_length=68, read_only=True)
     access_token = serializers.CharField(max_length=255, read_only=True)
-    refresh_token = serializers.CharField(max_length=255, read_only=True)
+    refresh_token = serializers.CharField(max_length=500, read_only=True)
     class Meta:
         model = User
-        fields = ('email', 'password', 'full_name', 'access_token', 'refresh_token')
+        fields = ('email', 'password', 'full_name', 'refresh_token', 'access_token')
     def validate(self, attrs):
         email = attrs.get('email', '')
         password = attrs.get('password', '')
@@ -74,18 +75,16 @@ class LoginSerializer(serializers.ModelSerializer):
         user_tokens = user.token() 
         return {
             "email": user.email,
-            "full_name": user.get_full_name(),
+            "full_name": user.full_name(),
+            "refresh_token": str(user_tokens.get('refresh')),
             "access_token":str(user_tokens.get('access')),
-            "refresh_token": str(user_tokens.get('refresh'))
         }
     
 class LogoutSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
-
     default_error_messages={
         'bad_token': ('Token không hợp lệ hoặc đã hết hạn')
     }
-
     def validate(self, attrs):
        self.token = attrs['refresh_token']
        return attrs

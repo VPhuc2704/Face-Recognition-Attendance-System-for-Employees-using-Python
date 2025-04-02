@@ -14,21 +14,27 @@ class User(AbstractBaseUser, PermissionsMixin):
     lastName = models.CharField(max_length= 100, verbose_name="lastName")
     password = models.CharField(max_length=255)
     is_staff = models.BooleanField(default=False)
-    is_verified = models.BooleanField(default=False)
+    # is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
     last_login = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
-    refresh_token = models.TextField(null=True, blank=True)
+    # refresh_token = models.TextField(null=True, blank=True)
+
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('staff', 'Nhân viên'),
+    ]
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='staff')
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ["firstName", "lastName"]
-    @property
     def __str__(self):
         return self.email
     
-    def get_full_name(self):
+    def full_name(self):
         return f"{self.firstName} {self.lastName}"
     
     def token(self):
@@ -37,6 +43,14 @@ class User(AbstractBaseUser, PermissionsMixin):
             'refresh': str(refresh),       
             'access': str(refresh.access_token),
         }
+    def save(self, *args, **kwargs):
+        if self.role == "admin":
+            self.is_superuser = True
+            self.is_staff = True
+        else: 
+            self.is_superuser = False
+            self.is_staff = False
+        super().save(*args, **kwargs)
 
 
 class BlacklistedToken(models.Model):
