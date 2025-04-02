@@ -49,8 +49,11 @@ export default function RegisterPage() {
   const form = useForm<RegisterBodyType>({
     resolver: zodResolver(RegisterBody),
     defaultValues: {
-      username: '',
+      lastName: '',
+      firstName: '',
       email: '',
+      password: '',
+      confirmPassword: '',
       department: '',
       position: '',
     },
@@ -251,8 +254,11 @@ export default function RegisterPage() {
       // TODO: Gửi data đến API, bao gồm ảnh khuôn mặt
       // Ví dụ: tạo FormData và gửi đến server
       const formData = new FormData()
-      formData.append('username', data.username)
+      formData.append('lastName', data.lastName)
+      formData.append('firstName', data.firstName)
       formData.append('email', data.email)
+      formData.append('password', data.password)
+      formData.append('confirmPassword', data.confirmPassword)
       formData.append('department', data.department)
       formData.append('position', data.position)
 
@@ -291,16 +297,27 @@ export default function RegisterPage() {
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="username"
+                    name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tên đăng nhập</FormLabel>
+                        <FormLabel>Họ</FormLabel>
                         <FormControl>
-                          <Input placeholder="username123" {...field} />
+                          <Input placeholder="Nguyễn" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          Tên đăng nhập để sử dụng trong hệ thống
-                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tên đệm và tên</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Văn A" {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -314,6 +331,45 @@ export default function RegisterPage() {
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input placeholder="email@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mật khẩu</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Nhập mật khẩu"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Mật khẩu phải có ít nhất 6 ký tự
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Xác nhận mật khẩu</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Nhập lại mật khẩu"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
