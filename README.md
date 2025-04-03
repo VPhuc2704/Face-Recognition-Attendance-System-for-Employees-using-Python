@@ -55,4 +55,5 @@ Truy cập ứng dụng tại: http://localhost:8000
 | POST        | /api/auth/register      | Đăng ký người dùng        |
 | POST        | /api/auth/login         | Đăng nhập                 |
 | POST        | /api/auth/logout        | Đăng xuất                 |
-| GET         | /api/users/             |                           |
+| GET         | /api/users/             | view user                 |
+| PORT        | /api/auth/token/refresh | cấp lại access            |
