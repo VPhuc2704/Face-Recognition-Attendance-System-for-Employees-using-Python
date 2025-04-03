@@ -91,7 +91,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "facetechDB",
         "USER": "root",
-        "PASSWORD": "Nguyenkhao1310",
+        "PASSWORD": "27042004",
         "HOST": "localhost",
         "PORT": "3306",
     }
