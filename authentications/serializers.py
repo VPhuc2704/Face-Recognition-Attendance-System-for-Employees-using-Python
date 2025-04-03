@@ -33,12 +33,13 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
         employee_data = validated_data.pop('employee')
+        role = 'admin' if validated_data.get('is_superuser', False) else validated_data.get('role', 'staff')
         user = User.objects.create_user(
             email = validated_data['email'],
             firstName = validated_data.get('firstName'),
             lastName = validated_data.get('lastName'),
             password = validated_data.get('password'),
-            role=validated_data.get('role', 'staff')
+            role=role,
         )   
         department, _ = Department.objects.get_or_create(name=employee_data['department'])
         position, _ = Position.objects.get_or_create(name=employee_data['position'])
