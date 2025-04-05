@@ -3,34 +3,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, Camera, Check } from 'lucide-react'
-import { RegisterBody, RegisterBodyType } from '@/schemaValidations/auth.schema'
+import { RegisterBody, RegisterBodyType } from '@/schemas/auth.schema'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export default function RegisterPage() {
@@ -55,8 +34,8 @@ export default function RegisterPage() {
       password: '',
       confirmPassword: '',
       department: '',
-      position: '',
-    },
+      position: ''
+    }
   })
 
   // Khởi động camera khi cần
@@ -72,9 +51,9 @@ export default function RegisterPage() {
           video: {
             width: { ideal: 640 },
             height: { ideal: 480 },
-            facingMode: 'user',
+            facingMode: 'user'
           },
-          audio: false,
+          audio: false
         })
 
         if (videoRef.current) {
@@ -102,9 +81,7 @@ export default function RegisterPage() {
         }
       } catch (err) {
         console.error('Không thể kết nối với camera:', err)
-        setCameraError(
-          'Không thể kết nối với camera. Vui lòng kiểm tra quyền truy cập và thử lại.',
-        )
+        setCameraError('Không thể kết nối với camera. Vui lòng kiểm tra quyền truy cập và thử lại.')
       }
     }
   }
@@ -176,7 +153,7 @@ export default function RegisterPage() {
         canvas.toBlob((blob) => {
           if (blob) {
             const file = new File([blob], 'face-image.png', {
-              type: 'image/png',
+              type: 'image/png'
             })
             form.setValue('faceImage', file)
           }
@@ -243,7 +220,7 @@ export default function RegisterPage() {
       if (!capturedImage) {
         form.setError('faceImage', {
           type: 'manual',
-          message: 'Vui lòng chụp ảnh khuôn mặt của bạn',
+          message: 'Vui lòng chụp ảnh khuôn mặt của bạn'
         })
         setIsLoading(false)
         return
@@ -279,30 +256,26 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-2xl shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">
-            Đăng ký tài khoản nhân viên mới
-          </CardTitle>
-          <CardDescription>
-            Vui lòng nhập thông tin và chụp ảnh khuôn mặt để hoàn tất đăng ký
-          </CardDescription>
+    <div className='flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4'>
+      <Card className='w-full max-w-2xl shadow-lg'>
+        <CardHeader className='text-center'>
+          <CardTitle className='text-2xl font-bold'>Đăng ký tài khoản nhân viên mới</CardTitle>
+          <CardDescription>Vui lòng nhập thông tin và chụp ảnh khuôn mặt để hoàn tất đăng ký</CardDescription>
         </CardHeader>
 
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='space-y-4'>
                   <FormField
                     control={form.control}
-                    name="lastName"
+                    name='lastName'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Họ</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nguyễn" {...field} />
+                          <Input placeholder='Nguyễn' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -311,12 +284,12 @@ export default function RegisterPage() {
 
                   <FormField
                     control={form.control}
-                    name="firstName"
+                    name='firstName'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Tên đệm và tên</FormLabel>
                         <FormControl>
-                          <Input placeholder="Văn A" {...field} />
+                          <Input placeholder='Văn A' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -325,12 +298,12 @@ export default function RegisterPage() {
 
                   <FormField
                     control={form.control}
-                    name="email"
+                    name='email'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="email@example.com" {...field} />
+                          <Input placeholder='email@example.com' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -339,20 +312,14 @@ export default function RegisterPage() {
 
                   <FormField
                     control={form.control}
-                    name="password"
+                    name='password'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Mật khẩu</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Nhập mật khẩu"
-                            {...field}
-                          />
+                          <Input type='password' placeholder='Nhập mật khẩu' {...field} />
                         </FormControl>
-                        <FormDescription>
-                          Mật khẩu phải có ít nhất 6 ký tự
-                        </FormDescription>
+                        <FormDescription>Mật khẩu phải có ít nhất 6 ký tự</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -360,16 +327,12 @@ export default function RegisterPage() {
 
                   <FormField
                     control={form.control}
-                    name="confirmPassword"
+                    name='confirmPassword'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Xác nhận mật khẩu</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Nhập lại mật khẩu"
-                            {...field}
-                          />
+                          <Input type='password' placeholder='Nhập lại mật khẩu' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -378,27 +341,22 @@ export default function RegisterPage() {
 
                   <FormField
                     control={form.control}
-                    name="department"
+                    name='department'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Phòng ban</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Chọn phòng ban" />
+                              <SelectValue placeholder='Chọn phòng ban' />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="it">
-                              Công nghệ thông tin
-                            </SelectItem>
-                            <SelectItem value="hr">Nhân sự</SelectItem>
-                            <SelectItem value="accounting">Kế toán</SelectItem>
-                            <SelectItem value="marketing">Marketing</SelectItem>
-                            <SelectItem value="sales">Kinh doanh</SelectItem>
+                            <SelectItem value='it'>Công nghệ thông tin</SelectItem>
+                            <SelectItem value='hr'>Nhân sự</SelectItem>
+                            <SelectItem value='accounting'>Kế toán</SelectItem>
+                            <SelectItem value='marketing'>Marketing</SelectItem>
+                            <SelectItem value='sales'>Kinh doanh</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -408,15 +366,12 @@ export default function RegisterPage() {
 
                   <FormField
                     control={form.control}
-                    name="position"
+                    name='position'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Vị trí công việc</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Nhân viên, Quản lý..."
-                            {...field}
-                          />
+                          <Input placeholder='Nhân viên, Quản lý...' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -424,11 +379,11 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <div className="space-y-4">
+                <div className='space-y-4'>
                   <FormItem>
                     <FormLabel>Ảnh khuôn mặt</FormLabel>
-                    <div className="flex flex-col items-center space-y-4">
-                      <div className="relative w-full h-[200px] border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <div className='flex flex-col items-center space-y-4'>
+                      <div className='relative w-full h-[200px] border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800'>
                         {/* Video element luôn tồn tại, chỉ ẩn khi không cần */}
                         <video
                           ref={videoRef}
@@ -443,89 +398,72 @@ export default function RegisterPage() {
 
                         {/* Hiệu ứng loading khi camera đang khởi động */}
                         {cameraActive && !capturedImage && !videoReady && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-                            <span className="ml-2 text-sm text-gray-500">
-                              Đang khởi động camera...
-                            </span>
+                          <div className='absolute inset-0 flex items-center justify-center'>
+                            <Loader2 className='h-8 w-8 animate-spin text-gray-500' />
+                            <span className='ml-2 text-sm text-gray-500'>Đang khởi động camera...</span>
                           </div>
                         )}
 
                         {/* Các phần hiển thị khác */}
                         {capturedImage && (
-                          <div className="relative w-full h-full">
+                          <div className='relative w-full h-full'>
                             <img
                               src={capturedImage}
-                              alt="Captured face"
-                              className="absolute top-0 left-0 w-full h-full object-cover"
+                              alt='Captured face'
+                              className='absolute top-0 left-0 w-full h-full object-cover'
                             />
-                            <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
+                            <div className='absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full'>
                               <Check size={16} />
                             </div>
                           </div>
                         )}
 
                         {!cameraActive && !capturedImage && (
-                          <div className="flex flex-col items-center justify-center w-full h-full">
-                            <Camera className="h-12 w-12 text-gray-400" />
-                            <p className="mt-2 text-sm text-gray-500">
-                              Kích hoạt camera để chụp ảnh
-                            </p>
+                          <div className='flex flex-col items-center justify-center w-full h-full'>
+                            <Camera className='h-12 w-12 text-gray-400' />
+                            <p className='mt-2 text-sm text-gray-500'>Kích hoạt camera để chụp ảnh</p>
                           </div>
                         )}
                       </div>
                       {/* Ẩn canvas để xử lý ảnh */}
-                      <canvas ref={canvasRef} className="hidden" />
+                      <canvas ref={canvasRef} className='hidden' />
                       {/* Hiển thị lỗi camera */}
                       {cameraError && (
-                        <Alert variant="destructive">
+                        <Alert variant='destructive'>
                           <AlertDescription>{cameraError}</AlertDescription>
                         </Alert>
                       )}
                       {!isCameraSupported && (
-                        <Alert variant="destructive">
+                        <Alert variant='destructive'>
                           <AlertTitle>Không hỗ trợ camera</AlertTitle>
                           <AlertDescription>
-                            Trình duyệt của bạn không hỗ trợ truy cập camera.
-                            Vui lòng sử dụng trình duyệt hiện đại như Chrome,
-                            Firefox hoặc Edge.
+                            Trình duyệt của bạn không hỗ trợ truy cập camera. Vui lòng sử dụng trình duyệt hiện đại như
+                            Chrome, Firefox hoặc Edge.
                           </AlertDescription>
                         </Alert>
                       )}
-                      <div className="flex space-x-2">
+                      <div className='flex space-x-2'>
                         {!cameraActive && !capturedImage && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={startCamera}
-                          >
-                            <Camera className="mr-2 h-4 w-4" />
+                          <Button type='button' variant='outline' onClick={startCamera}>
+                            <Camera className='mr-2 h-4 w-4' />
                             Kích hoạt camera
                           </Button>
                         )}
 
                         {cameraActive && !capturedImage && (
-                          <Button type="button" onClick={captureImage}>
+                          <Button type='button' onClick={captureImage}>
                             Chụp ảnh
                           </Button>
                         )}
 
                         {capturedImage && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={retakeImage}
-                          >
+                          <Button type='button' variant='outline' onClick={retakeImage}>
                             Chụp lại
                           </Button>
                         )}
 
                         {cameraActive && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={stopCamera}
-                          >
+                          <Button type='button' variant='ghost' onClick={stopCamera}>
                             Tắt camera
                           </Button>
                         )}
@@ -538,19 +476,14 @@ export default function RegisterPage() {
 
               <Separator />
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/login')}
-                  disabled={isLoading}
-                >
+              <div className='flex justify-end space-x-2'>
+                <Button type='button' variant='outline' onClick={() => navigate('/login')} disabled={isLoading}>
                   Đã có tài khoản? Đăng nhập
                 </Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button type='submit' disabled={isLoading}>
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                       Đang đăng ký...
                     </>
                   ) : (

@@ -20,9 +20,9 @@ export default [
       ecmaVersion: 2020,
       sourceType: 'module',
       globals: {
-        ...globals.browser,
-      },
-    },
+        ...globals.browser
+      }
+    }
   },
 
   // TypeScript specific rules
@@ -33,34 +33,39 @@ export default [
       sourceType: 'module',
       parser: tseslint.parser,
       globals: {
-        ...globals.browser,
+        ...globals.browser
       },
       parserOptions: {
         // Remove project option to avoid type checking in linting
         ecmaFeatures: {
-          jsx: true,
-        },
-      },
+          jsx: true
+        }
+      }
     },
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
-      prettier: prettierPlugin,
+      prettier: prettierPlugin
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-      '@typescript-eslint/no-unused-vars': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
       'prettier/prettier': [
-        'error',
+        'warn',
         {
+          arrowParens: 'always',
+          semi: false,
+          trailingComma: 'none',
+          tabWidth: 2,
           endOfLine: 'auto',
-        },
-      ],
-    },
-  },
+          useTabs: false,
+          singleQuote: true,
+          printWidth: 120,
+          jsxSingleQuote: true
+        }
+      ]
+    }
+  }
 ]

@@ -33,7 +33,7 @@ export default function EmployeeLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className='flex h-screen bg-gray-50 dark:bg-gray-900'>
       {/* Desktop Sidebar */}
       <DesktopSidebar
         currentPath={location.pathname}
@@ -41,11 +41,11 @@ export default function EmployeeLayout() {
         handleNavigation={handleNavigation}
         toggleTheme={toggleTheme}
         handleLogout={handleLogout}
-        userRole="employee"
+        userRole='employee'
       />
 
       {/* Mobile Header & Menu */}
-      <div className="flex flex-col flex-1">
+      <div className='flex flex-col flex-1'>
         <MobileSidebar
           theme={theme}
           handleNavigation={handleNavigation}
@@ -53,14 +53,14 @@ export default function EmployeeLayout() {
           handleLogout={handleLogout}
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}
-          userRole="employee"
+          userRole='employee'
         />
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className='flex-1 overflow-y-auto p-4 md:p-6'>
           <Routes>
-            <Route path="/" element={<EmployeeHome />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/attendance" element={<Attendance />} />
+            <Route path='/' element={<EmployeeHome />} />
+            <Route path='/profile' element={<Profile />} />
+            <Route path='/attendance' element={<Attendance />} />
           </Routes>
         </main>
       </div>
