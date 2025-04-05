@@ -16,12 +16,6 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
 
-  // Xử lý đăng xuất
-  const handleLogout = () => {
-    // TODO: Thực hiện các tác vụ đăng xuất (xóa token, xóa dữ liệu người dùng...)
-    navigate('/login')
-  }
-
   // Xử lý chuyển hướng menu
   const handleNavigation = (path: string) => {
     navigate(path)
@@ -34,37 +28,35 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className='flex h-screen bg-gray-50 dark:bg-gray-900'>
       {/* Desktop Sidebar */}
       <DesktopSidebar
         currentPath={location.pathname}
         theme={theme}
         handleNavigation={handleNavigation}
         toggleTheme={toggleTheme}
-        handleLogout={handleLogout}
-        userRole="admin"
+        userRole='admin'
       />
 
       {/* Mobile Header & Menu */}
-      <div className="flex flex-col flex-1">
+      <div className='flex flex-col flex-1'>
         <MobileSidebar
           theme={theme}
           handleNavigation={handleNavigation}
           toggleTheme={toggleTheme}
-          handleLogout={handleLogout}
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}
-          userRole="admin"
+          userRole='admin'
         />
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className='flex-1 overflow-y-auto p-4 md:p-6'>
           <Routes>
-            <Route path="/" element={<AdminHome />} />
-            <Route path="/employees" element={<EmployeeList />} />
-            <Route path="/attendance-capture" element={<AttendanceCapture />} />
-            <Route path="/attendance-list" element={<AttendanceList />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path='/' element={<AdminHome />} />
+            <Route path='/employees' element={<EmployeeList />} />
+            <Route path='/attendance-capture' element={<AttendanceCapture />} />
+            <Route path='/attendance-list' element={<AttendanceList />} />
+            <Route path='/reports' element={<Reports />} />
+            <Route path='/settings' element={<Settings />} />
           </Routes>
         </main>
       </div>

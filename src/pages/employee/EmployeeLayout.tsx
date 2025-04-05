@@ -15,12 +15,6 @@ export default function EmployeeLayout() {
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
 
-  // Xử lý đăng xuất
-  const handleLogout = () => {
-    // TODO: Thực hiện các tác vụ đăng xuất (xóa token, xóa dữ liệu người dùng...)
-    navigate('/login')
-  }
-
   // Xử lý chuyển hướng menu
   const handleNavigation = (path: string) => {
     navigate(path)
@@ -40,7 +34,6 @@ export default function EmployeeLayout() {
         theme={theme}
         handleNavigation={handleNavigation}
         toggleTheme={toggleTheme}
-        handleLogout={handleLogout}
         userRole='employee'
       />
 
@@ -50,7 +43,6 @@ export default function EmployeeLayout() {
           theme={theme}
           handleNavigation={handleNavigation}
           toggleTheme={toggleTheme}
-          handleLogout={handleLogout}
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}
           userRole='employee'

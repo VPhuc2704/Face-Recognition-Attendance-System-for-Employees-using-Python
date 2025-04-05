@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,7 @@ import { Role } from '@/constants/type'
 import { toast } from 'sonner'
 
 export default function LoginPage() {
-  const { isAuthenticated, hasRole, clearAuthData, setAuthData } = useAuth()
+  const { isAuthenticated, hasRole, setAuthData } = useAuth()
   const navigate = useNavigate()
   const login = useLogin()
   const [activeTab, setActiveTab] = useState<'employee' | 'admin'>('employee')
@@ -38,36 +38,36 @@ export default function LoginPage() {
     }
   })
 
-  const onSubmit = (data: LoginBodyType) => {
-    const loginData = {
-      ...data,
-      expectRole: activeTab === 'admin' ? Role.Admin : Role.Employee
-    }
-    login.mutate(loginData, {
-      onSuccess: (res) => {
-        const isAdmin = res.role === Role.Admin
-        if ((activeTab === 'admin' && !isAdmin) || (activeTab === 'employee' && isAdmin)) {
-          toast.error('Lỗi đăng nhập', {
-            description: 'Bạn không có quyền đăng nhập với vai trò này. Vui lòng chọn đúng loại tài khoản.'
-          })
-          return
-        }
-        // Lưu thông tin xác thực vào context và localStorage
-        setAuthData(res)
-        // Chuyển hướng dựa vào vai trò
-        if (res.role === Role.Admin) {
-          navigate('/admin')
-        } else {
-          navigate('/employee')
-        }
-      },
-
-      onError: () => {
-        toast.error('Đăng nhập thất bại', {
-          description: 'Vui lòng kiểm tra thông tin đăng nhập và thử lại'
-        })
+  const onSubmit = async (data: LoginBodyType) => {
+    try {
+      const loginData = {
+        ...data,
+        expectRole: activeTab === 'admin' ? Role.Admin : Role.Employee
       }
-    })
+      const res = await login.mutateAsync(loginData)
+      // Kiểm tra vai trò trước khi xác thực
+      const isAdmin = res.role === Role.Admin
+      if ((activeTab === 'admin' && !isAdmin) || (activeTab === 'employee' && isAdmin)) {
+        toast.error('Lỗi đăng nhập', {
+          description: 'Bạn không có quyền đăng nhập với vai trò này. Vui lòng chọn đúng loại tài khoản.'
+        })
+        return // Không tiếp tục xử lý đăng nhập
+      }
+      // Nếu vai trò phù hợp, lưu dữ liệu và chuyển hướng
+      setAuthData(res)
+
+      // Chuyển hướng dựa vào vai trò
+      if (res.role === Role.Admin) {
+        navigate('/admin')
+      } else {
+        navigate('/employee')
+      }
+    } catch (error) {
+      // Xử lý lỗi
+      toast.error('Đăng nhập thất bại', {
+        description: 'Vui lòng kiểm tra thông tin đăng nhập và thử lại'
+      })
+    }
   }
 
   return (
@@ -128,13 +128,9 @@ export default function LoginPage() {
               <div className='mt-4 text-center'>
                 <p className='text-sm text-gray-500 dark:text-gray-400'>
                   Chưa có tài khoản?{' '}
-                  <Button
-                    variant='link'
-                    className='p-0 h-auto font-medium text-primary'
-                    onClick={() => navigate('/register')}
-                  >
-                    Đăng ký ngay
-                  </Button>
+                  <Link to='/register' className='font-medium text-primary hover:underline'>
+                    Đăng ký
+                  </Link>
                 </p>
               </div>
             </TabsContent>

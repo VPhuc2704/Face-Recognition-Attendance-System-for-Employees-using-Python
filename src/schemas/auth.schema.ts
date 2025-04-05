@@ -58,3 +58,8 @@ export const RegisterRes = z.object({
 })
 
 export type RegisterResType = z.infer<typeof RegisterRes>
+
+export const LogoutBody = z.object({
+  refresh_token: z.string()
+})
+export type LogoutBodyType = z.infer<typeof LogoutBody>
