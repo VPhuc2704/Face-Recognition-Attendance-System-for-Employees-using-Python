@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reset Application</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+      }
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+        margin-bottom: 10px;
+      }
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Application Recovery</h1>
+
+    <div class="card">
+      <h2>Is your application stuck?</h2>
+      <p>You can try to reset the application state by clearing the local storage data:</p>
+      <button onclick="clearStorageAndRedirect()">Clear Data & Go to Login</button>
+    </div>
+
+    <div class="card">
+      <h2>Current Storage Data</h2>
+      <pre id="storage-display">Loading...</pre>
+    </div>
+
+    <script>
+      // Display LocalStorage contents
+      function updateStorageDisplay() {
+        const display = document.getElementById('storage-display')
+        try {
+          const items = {}
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            if (key) {
+              items[key] = localStorage.getItem(key)
+            }
+          }
+          display.textContent = JSON.stringify(items, null, 2)
+        } catch (e) {
+          display.textContent = 'Error: ' + e.message
+        }
+      }
+
+      function clearStorageAndRedirect() {
+        localStorage.clear()
+        window.location.href = '/login'
+      }
+
+      updateStorageDisplay()
+    </script>
+  </body>
+</html>

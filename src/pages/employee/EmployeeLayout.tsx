@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Routes, Route } from 'react-router-dom'
+import { useNavigate, Routes, Route, Outlet } from 'react-router-dom'
 import { useTheme } from '@/components/theme-provider'
 
 // import EmployeeProfile from './EmployeeProfile'
@@ -49,11 +49,7 @@ export default function EmployeeLayout() {
         />
         {/* Main Content */}
         <main className='flex-1 overflow-y-auto p-4 md:p-6'>
-          <Routes>
-            <Route path='/' element={<EmployeeHome />} />
-            <Route path='/profile' element={<Profile />} />
-            <Route path='/attendance' element={<Attendance />} />
-          </Routes>
+          <Outlet />
         </main>
       </div>
     </div>

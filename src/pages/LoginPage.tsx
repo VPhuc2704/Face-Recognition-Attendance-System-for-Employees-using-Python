@@ -53,15 +53,6 @@ export default function LoginPage() {
         })
         return // Không tiếp tục xử lý đăng nhập
       }
-      // Nếu vai trò phù hợp, lưu dữ liệu và chuyển hướng
-      setAuthData(res)
-
-      // Chuyển hướng dựa vào vai trò
-      if (res.role === Role.Admin) {
-        navigate('/admin')
-      } else {
-        navigate('/employee')
-      }
     } catch (error) {
       // Xử lý lỗi
       toast.error('Đăng nhập thất bại', {

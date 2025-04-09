@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Routes, Route } from 'react-router-dom'
+import { useNavigate, Routes, Route, Outlet, useLocation } from 'react-router-dom'
 import { useTheme } from '@/components/theme-provider'
 import { Settings } from 'lucide-react'
 
@@ -14,6 +14,7 @@ import MobileSidebar from '@/components/MobileSidebar'
 export default function AdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation() // Lấy location
   const { theme, setTheme } = useTheme()
 
   // Xử lý chuyển hướng menu
@@ -50,14 +51,7 @@ export default function AdminLayout() {
         />
         {/* Main Content */}
         <main className='flex-1 overflow-y-auto p-4 md:p-6'>
-          <Routes>
-            <Route path='/' element={<AdminHome />} />
-            <Route path='/employees' element={<EmployeeList />} />
-            <Route path='/attendance-capture' element={<AttendanceCapture />} />
-            <Route path='/attendance-list' element={<AttendanceList />} />
-            <Route path='/reports' element={<Reports />} />
-            <Route path='/settings' element={<Settings />} />
-          </Routes>
+          <Outlet />
         </main>
       </div>
     </div>

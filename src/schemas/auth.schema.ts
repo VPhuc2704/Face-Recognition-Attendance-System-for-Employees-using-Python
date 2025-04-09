@@ -63,3 +63,13 @@ export const LogoutBody = z.object({
   refresh_token: z.string()
 })
 export type LogoutBodyType = z.infer<typeof LogoutBody>
+
+export const RefreshTokenBody = z.object({
+  refresh: z.string()
+})
+export type RefreshTokenBodyType = z.infer<typeof RefreshTokenBody>
+
+export const RefreshTokenRes = z.object({
+  access: z.string()
+})
+export type RefreshTokenResType = z.infer<typeof RefreshTokenRes>
