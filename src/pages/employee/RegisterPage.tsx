@@ -6,14 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, Camera, Check } from 'lucide-react'
 import { RegisterBody, RegisterBodyType } from '@/schemas/auth.schema'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { toast } from 'sonner'
+import { DepartmentLabels, PositionLabels } from '@/constants/type'
+import { useRegister } from '@/hooks/useAuthentication'
 
 export default function RegisterPage() {
-  const [isLoading, setIsLoading] = useState(false)
   const [cameraActive, setCameraActive] = useState(false)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -24,6 +26,9 @@ export default function RegisterPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const navigate = useNavigate()
+
+  // Sử dụng hook useRegister để xử lý đăng ký
+  const { mutate: registerUser, isPending: isRegistering } = useRegister()
 
   const form = useForm<RegisterBodyType>({
     resolver: zodResolver(RegisterBody),
@@ -215,43 +220,20 @@ export default function RegisterPage() {
   // Xử lý submit form
   const onSubmit = async (data: RegisterBodyType) => {
     try {
-      setIsLoading(true)
-
       if (!capturedImage) {
         form.setError('faceImage', {
           type: 'manual',
           message: 'Vui lòng chụp ảnh khuôn mặt của bạn'
         })
-        setIsLoading(false)
         return
       }
-
-      console.log('Register data:', data)
-
-      // TODO: Gửi data đến API, bao gồm ảnh khuôn mặt
-      // Ví dụ: tạo FormData và gửi đến server
-      const formData = new FormData()
-      formData.append('lastName', data.lastName)
-      formData.append('firstName', data.firstName)
-      formData.append('email', data.email)
-      formData.append('password', data.password)
-      formData.append('confirmPassword', data.confirmPassword)
-      formData.append('department', data.department)
-      formData.append('position', data.position)
-
-      if (data.faceImage) {
-        formData.append('faceImage', data.faceImage)
-      }
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Di chuyển đến trang đăng nhập sau khi đăng ký thành công
-      navigate('/login')
+      // Sử dụng hook đăng ký đã tạo
+      registerUser(data)
     } catch (error) {
       console.error('Đăng ký thất bại:', error)
-    } finally {
-      setIsLoading(false)
+      toast.error('Đăng ký thất bại', {
+        description: 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.'
+      })
     }
   }
 
@@ -352,11 +334,11 @@ export default function RegisterPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value='it'>Công nghệ thông tin</SelectItem>
-                            <SelectItem value='hr'>Nhân sự</SelectItem>
-                            <SelectItem value='accounting'>Kế toán</SelectItem>
-                            <SelectItem value='marketing'>Marketing</SelectItem>
-                            <SelectItem value='sales'>Kinh doanh</SelectItem>
+                            {Object.entries(DepartmentLabels).map(([key, value]) => (
+                              <SelectItem key={key} value={key}>
+                                {value}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -370,9 +352,20 @@ export default function RegisterPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Vị trí công việc</FormLabel>
-                        <FormControl>
-                          <Input placeholder='Nhân viên, Quản lý...' {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Chọn vị trí công việc' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(PositionLabels).map(([key, value]) => (
+                              <SelectItem key={key} value={key}>
+                                {value}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -477,11 +470,11 @@ export default function RegisterPage() {
               <Separator />
 
               <div className='flex justify-end space-x-2'>
-                <Button type='button' variant='outline' onClick={() => navigate('/login')} disabled={isLoading}>
+                <Button type='button' variant='outline' onClick={() => navigate('/login')} disabled={isRegistering}>
                   Đã có tài khoản? Đăng nhập
                 </Button>
-                <Button type='submit' disabled={isLoading}>
-                  {isLoading ? (
+                <Button type='submit' disabled={isRegistering}>
+                  {isRegistering ? (
                     <>
                       <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                       Đang đăng ký...

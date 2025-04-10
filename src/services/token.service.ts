@@ -7,7 +7,7 @@ import { authEvents } from '@/utils/authEvent'
 // Thời gian còn lại (giây) trước khi token hết hạn mà chúng ta cần refresh
 const TOKEN_REFRESH_THRESHOLD = 60 * 5 // 5 phút
 // Thời gian kiểm tra token định kỳ (ms)
-const TOKEN_CHECK_INTERVAL = 15000 // 30 giây
+const TOKEN_CHECK_INTERVAL = 30000 // 30 giây
 
 let tokenMonitorInterval: number | null = null
 

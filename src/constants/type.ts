@@ -42,9 +42,87 @@ export interface AuthEventPayload {
   [key: string]: any
 }
 
-// export interface SessionInfo {
-//   isActive: boolean
-//   remainingTime: number // milliseconds
-//   formattedTime: string // "HH:MM:SS"
-//   percentRemaining: number // 0-100
-// }
+export const Department = {
+  IT: 'it',
+  HR: 'hr',
+  Accounting: 'accounting',
+  Marketing: 'marketing',
+  Sales: 'sales'
+} as const
+
+export type DepartmentType = (typeof Department)[keyof typeof Department]
+
+export const DepartmentValues = [
+  Department.IT,
+  Department.HR,
+  Department.Accounting,
+  Department.Marketing,
+  Department.Sales
+] as const
+
+export const DepartmentLabels: Record<DepartmentType, string> = {
+  [Department.IT]: 'Công nghệ thông tin',
+  [Department.HR]: 'Nhân sự',
+  [Department.Accounting]: 'Kế toán',
+  [Department.Marketing]: 'Marketing',
+  [Department.Sales]: 'Kinh doanh'
+}
+
+export const Position = {
+  Staff: 'staff',
+  TeamLead: 'team_lead',
+  Manager: 'manager',
+  Director: 'director',
+  Developer: 'developer',
+  Designer: 'designer',
+  Tester: 'tester',
+  Analyst: 'analyst',
+  Accountant: 'accountant',
+  HRSpecialist: 'hr_specialist',
+  MarketingSpecialist: 'marketing_specialist',
+  SalesExecutive: 'sales_executive',
+  Supervisor: 'supervisor',
+  Consultant: 'consultant',
+  Intern: 'intern',
+  Other: 'other'
+} as const
+
+export type PositionType = (typeof Position)[keyof typeof Position]
+
+export const PositionValues = [
+  Position.Staff,
+  Position.TeamLead,
+  Position.Manager,
+  Position.Director,
+  Position.Developer,
+  Position.Designer,
+  Position.Tester,
+  Position.Analyst,
+  Position.Accountant,
+  Position.HRSpecialist,
+  Position.MarketingSpecialist,
+  Position.SalesExecutive,
+  Position.Supervisor,
+  Position.Consultant,
+  Position.Intern,
+  Position.Other
+] as const
+
+export const PositionLabels: Record<PositionType, string> = {
+  [Position.Staff]: 'Nhân viên',
+  [Position.TeamLead]: 'Trưởng nhóm',
+  [Position.Manager]: 'Quản lý',
+  [Position.Director]: 'Giám đốc',
+  [Position.Developer]: 'Lập trình viên',
+  [Position.Designer]: 'Thiết kế',
+  [Position.Tester]: 'Kiểm thử viên',
+  [Position.Analyst]: 'Chuyên viên phân tích',
+  [Position.Accountant]: 'Kế toán viên',
+  [Position.HRSpecialist]: 'Chuyên viên nhân sự',
+  [Position.MarketingSpecialist]: 'Chuyên viên marketing',
+  [Position.SalesExecutive]: 'Nhân viên kinh doanh',
+  [Position.Supervisor]: 'Giám sát',
+  [Position.Consultant]: 'Tư vấn viên',
+  [Position.Intern]: 'Thực tập sinh',
+  [Position.Other]: 'Khác'
+}

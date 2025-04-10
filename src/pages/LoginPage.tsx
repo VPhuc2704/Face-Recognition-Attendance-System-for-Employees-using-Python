@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -13,12 +13,16 @@ import { useLogin } from '@/hooks/useAuthentication'
 import { useEffect, useState } from 'react'
 import { Role } from '@/constants/type'
 import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function LoginPage() {
-  const { isAuthenticated, hasRole, setAuthData } = useAuth()
+  const { isAuthenticated, hasRole } = useAuth()
   const navigate = useNavigate()
   const login = useLogin()
   const [activeTab, setActiveTab] = useState<'employee' | 'admin'>('employee')
+  const location = useLocation()
+  const registrationSuccess = location.state?.registrationSuccess
+  const message = location.state?.message
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -69,6 +73,11 @@ export default function LoginPage() {
           <CardDescription>Đăng nhập để tiếp tục</CardDescription>
         </CardHeader>
         <CardContent>
+          {registrationSuccess && (
+            <Alert className='mb-4 bg-green-50 border-green-200'>
+              <AlertDescription className='text-green-800'>{message}</AlertDescription>
+            </Alert>
+          )}
           <Tabs defaultValue='employee' onValueChange={(value) => setActiveTab(value as 'employee' | 'admin')}>
             <TabsList className='grid w-full grid-cols-2 mb-6'>
               <TabsTrigger value='employee'>Nhân viên</TabsTrigger>
@@ -85,7 +94,7 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder='your.email@example.com' {...field} />
+                          <Input placeholder='employee@company.com' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -32,7 +32,7 @@ export const RegisterBody = z
     password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').max(50, 'Mật khẩu không được vượt quá 50 ký tự'),
     confirmPassword: z.string(),
     department: z.string().min(1, 'Vui lòng chọn phòng ban'),
-    position: z.string().min(1, 'Vui lòng nhập vị trí công việc'),
+    position: z.string().min(1, 'Vui lòng chọn vị trí công việc'),
     faceImage: z.instanceof(File).optional()
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -43,18 +43,18 @@ export const RegisterBody = z
 export type RegisterBodyType = z.infer<typeof RegisterBody>
 
 export const RegisterRes = z.object({
-  message: z.string(),
-  user_info: z.object({
+  data: z.object({
     id: z.number(),
     firstName: z.string(),
     lastName: z.string(),
     email: z.string().email(),
-    date_joined: z.string(), // Có thể sử dụng z.date() nếu muốn chuyển đổi thành Date
-    is_staff: z.boolean(),
-    is_superuser: z.boolean(),
-    role: z.string() // Hoặc sử dụng z.enum() nếu có danh sách cụ thể các vai trò
+    employee: z.object({
+      department: z.string(),
+      position: z.string(),
+      employeeImg: z.string()
+    })
   }),
-  is_authenticated: z.boolean()
+  message: z.string()
 })
 
 export type RegisterResType = z.infer<typeof RegisterRes>
