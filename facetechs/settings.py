@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "authentications",
     "employees",
+    'attendance',
+    'faceRecognition',
 ]
 
 MIDDLEWARE = [
@@ -122,11 +124,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Ho_Chi_Minh"
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)

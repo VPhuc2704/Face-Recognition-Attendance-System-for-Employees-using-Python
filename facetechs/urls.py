@@ -18,10 +18,20 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
+from django.shortcuts import redirect
 
+def redirect_view(request):
+    return redirect('admin/')
 urlpatterns = [
+    path('', redirect_view),
+
     path('admin/', admin.site.urls),
     path('api/auth/',include('authentications.urls')),
+    path('api/employees/',include('employees.urls')),
+    path('api/face_recognition/',include('faceRecognition.urls')),
+    path('api/attendance/',include('attendance.urls')),
+    path('api/admin/',include('admins.urls')),
+
 ]
 
 if settings.DEBUG:
