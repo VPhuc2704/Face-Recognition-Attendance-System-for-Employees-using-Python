@@ -1,3 +1,4 @@
+from django.utils import timezone
 from tokenize import TokenError
 from django.conf import settings
 import jwt
@@ -73,6 +74,9 @@ class LoginSerializer(serializers.ModelSerializer):
         user = authenticate(request, email=email, password=password)
         if not user:
             raise AuthenticationFailed('User not found!')
+    
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
         user_tokens = user.token() 
         return {
             "email": user.email,

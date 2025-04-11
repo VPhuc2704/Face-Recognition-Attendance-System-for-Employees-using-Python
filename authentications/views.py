@@ -66,7 +66,6 @@ class UserView(APIView):
 
     def get(self, request):
         user = request.user  # Lấy thông tin người dùng từ request
-
         data = {
             "message": "Xác thực thành công",
             "user_info": {
