@@ -88,16 +88,6 @@ WSGI_APPLICATION = "facetechs.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.mysql",
-#         "NAME": "facetechDB",
-#         "USER": "root",
-#         "PASSWORD": "27042004",
-#         "HOST": "localhost",
-#         "PORT": "3306",
-#     }
-# }
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -134,7 +124,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-# TIME_ZONE = "Asia/Ho_Chi_Minh"
 TIME_ZONE = config("TIME_ZONE")
 
 USE_I18N = True
