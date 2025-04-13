@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.crypto import get_random_string
 
 from authentications.models import User
 
@@ -36,5 +37,10 @@ class Employee(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     def full_name (self):
         return f"{self.user.firstName} {self.user.lastName}".strip()
-
+    def save(self, *args, **kwargs):
+        if not self.start_date:
+            self.start_date = self.user.date_joined.date()
+        if not self.employee_code:
+            self.employee_code = 'EMP' + get_random_string(length=6, allowed_chars='0123456789')
+        super().save(*args, **kwargs)
 

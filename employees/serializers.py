@@ -22,7 +22,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ('department', 'position', 'employeeImg')
-
     def validate(self, data):
             # Tự động tạo department/position nếu chưa có
             department_name = data.get('department')

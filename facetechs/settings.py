@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from decouple import config
 import os
 from pathlib import Path
 from datetime import timedelta
@@ -23,10 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-s86-fg+5!#bg!&0fe(!6p#oz(bnso+a*1cw5jdg7ssgd9bp-74"
-
+SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", cast=bool)
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -88,14 +88,24 @@ WSGI_APPLICATION = "facetechs.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "facetechDB",
+#         "USER": "root",
+#         "PASSWORD": "27042004",
+#         "HOST": "localhost",
+#         "PORT": "3306",
+#     }
+# }
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "facetechDB",
-        "USER": "root",
-        "PASSWORD": "27042004",
-        "HOST": "localhost",
-        "PORT": "3306",
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT"),
     }
 }
 
@@ -124,7 +134,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "Asia/Ho_Chi_Minh"
+# TIME_ZONE = "Asia/Ho_Chi_Minh"
+TIME_ZONE = config("TIME_ZONE")
 
 USE_I18N = True
 
