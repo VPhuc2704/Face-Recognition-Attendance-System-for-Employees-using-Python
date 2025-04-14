@@ -102,10 +102,17 @@ class FaceRecognitionView(APIView):
                     return JsonResponse({
                         "status": "success",
                         "message": f"Điểm danh thành công cho {employee.full_name()}",
-                        "employeeId": recognized_id,
-                        "employee_name": employee.full_name
-
-                        
+                        "employee":{
+                            "employeeId": recognized_id,
+                            "employee_name": employee.full_name(),
+                            "department": employee.department.name if employee.department else None,
+                            "position": employee.position.name if employee.position else None,
+                            "employee_code": employee.employee_code,
+                        },
+                        "attendance":{
+                            "check_in": now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "status": employee.status,
+                        }
                     })
                 
                 except Employee.DoesNotExist:
