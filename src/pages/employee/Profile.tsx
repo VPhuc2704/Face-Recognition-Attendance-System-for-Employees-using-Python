@@ -13,7 +13,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { cn, formatDate } from '@/lib/utils'
 import { vi } from 'date-fns/locale/vi'
 import { format } from 'date-fns/format'
-import { Status, StatusLabels } from '@/constants/type'
+import { DepartmentLabels, DepartmentType, PositionLabels, PositionType, Status, StatusLabels } from '@/constants/type'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -108,6 +108,10 @@ export default function Profile() {
                   <AvatarImage
                     src={`${import.meta.env.VITE_MEDIA_URL || ''}${profileData.employeeImg}`}
                     alt={profileData.user}
+                    className='object-cover'
+                    style={{
+                      objectPosition: 'center 30%' // Điều chỉnh theo vị trí khuôn mặt, thường ở phần trên ảnh
+                    }}
                   />
                 ) : (
                   <AvatarFallback>
@@ -129,11 +133,19 @@ export default function Profile() {
             <CardContent className='space-y-4'>
               <div>
                 <Label>Phòng ban</Label>
-                <p className='text-md mt-1 font-medium'>{profileData.department?.name || 'Chưa phân công'}</p>
+                <p className='text-md mt-1 font-medium'>
+                  {profileData.department?.name
+                    ? DepartmentLabels[profileData.department.name as DepartmentType] || profileData.department.name
+                    : 'Chưa phân công'}
+                </p>
               </div>
               <div>
                 <Label>Chức vụ</Label>
-                <p className='text-md mt-1 font-medium'>{profileData.position?.name || 'Chưa phân công'}</p>
+                <p className='text-md mt-1 font-medium'>
+                  {profileData.position?.name
+                    ? PositionLabels[profileData.position.name as PositionType] || profileData.position.name
+                    : 'Chưa phân công'}
+                </p>
               </div>
               <div>
                 <Label>Mã nhân viên</Label>
