@@ -35,7 +35,7 @@ class Employee(models.Model):
     employeeImg = models.ImageField(upload_to='employeeFace_img/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    def full_name (self):
+    def full_name(self):
         return f"{self.user.firstName} {self.user.lastName}".strip()
     def save(self, *args, **kwargs):
         if not self.start_date:

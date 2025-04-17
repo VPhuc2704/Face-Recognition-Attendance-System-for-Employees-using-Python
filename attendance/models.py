@@ -1,11 +1,8 @@
-
-from django.db import models
-# Create your models here.
 from django.db import models
 
 # Create your models here.
 from employees.models import Employee
-from datetime import time # Thêm dòng này
+from datetime import time
 class Attendance(models.Model):
     # id = models.AutoField(primary_key=True)
     employeeId = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance')
@@ -14,7 +11,7 @@ class Attendance(models.Model):
     check_out = models.DateTimeField(null=True, blank=True)
     check_in_location = models.CharField(max_length=255, null=True, blank=True)
     check_out_location = models.CharField(max_length=255, null=True, blank=True)
-    status = models.CharField(max_length=10, choices=[('Present', 'Có mặt'),('Late','Trễ giờ'), ('Absent', 'Vắng mặt')], default='Present')
+    status = models.CharField(max_length=10, choices=[('Present', 'Có mặt'),('Late','Trễ giờ'), ('Absent', 'Vắng mặt')])
     reason = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
