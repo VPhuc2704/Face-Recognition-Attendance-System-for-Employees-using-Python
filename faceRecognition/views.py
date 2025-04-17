@@ -8,23 +8,24 @@ import base64
 from employees.models import Employee
 from attendance.models import Attendance
 from django.utils.timezone import now
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from employees.serializers import User
-from faceRecognition.utils import load_user_faces
+from faceRecognition.utils import load_known_faces
 import logging
 
 logger = logging.getLogger(__name__)
 
 # @method_decorator(csrf_exempt, name='dispatch')
 class FaceRecognitionView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     
     def post(self, request):
+        if request.method != 'POST':
+            return JsonResponse({"status": "error", "message": "Chỉ chấp nhận POST request"}, status=405)
         try:
-            user = request.user
             image_base64 = request.data.get("image")
             if not image_base64:
                 return JsonResponse({"status": "error", "message": "Không có dữ liệu hình ảnh"}, status=400)
@@ -41,8 +42,8 @@ class FaceRecognitionView(APIView):
 
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            user_encodings, expected_id  = load_user_faces(user)
-            if  user_encodings is None:
+            known_face_encodings, known_face_ids  = load_known_faces()
+            if  known_face_encodings is None:
                 return JsonResponse({"status": "error", "message": "Không có dữ liệu khuôn mặt"}, status=400)
 
             face_locations = face_recognition.face_locations(rgb_frame) # Phát hiện khuôn mặt trong ảnh
@@ -53,23 +54,35 @@ class FaceRecognitionView(APIView):
             face_encodings = face_recognition.face_encodings(rgb_frame, face_locations) # Lấy đặc trưng khuôn mặt
 
             recognized_id = None
+            max_attempts = 15  # Giảm số lần thử để tăng tốc độ
+            attempt = 0
 
-            for face_encoding in face_encodings:
-                matches = face_recognition.compare_faces([user_encodings], face_encoding, tolerance=0.2) # So sánh khuôn mặt
-                face_distances = face_recognition.face_distance([user_encodings], face_encoding)
-                if True in matches:
-                    if any(matches) or len(face_distances) > 0 and face_distances[0] < 0.45:
-                        recognized_id = expected_id
-                        break
-        
+            while attempt < max_attempts and not recognized_id:
+                
+                # Phát hiện khuôn mặt
+                face_locations = face_recognition.face_locations(rgb_frame)
+                if not face_locations:
+                    attempt += 1
+                    continue
+                
+                # Lấy đặc trưng khuôn mặt
+                face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+                
+                for face_encoding in face_encodings:
+                    # So sánh với các khuôn mặt đã biết
+                    matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.2)
+                    face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
+                    
+                    if True in matches:
+                        best_match_index = np.argmin(face_distances)
+                        if matches[best_match_index]:
+                            recognized_id = known_face_ids[best_match_index]
+                            break
+                attempt += 1
+            
             # Xử lý sau nhận diện
             if recognized_id:
                 try:
-                    if user.employee.id != recognized_id:
-                        return JsonResponse({
-                            "status": "error",
-                            "message": "Điểm danh không thành công."
-                        }, status=403)
                     employee = Employee.objects.get(id=recognized_id)
                     # Kiểm tra đã điểm danh chưa
                     today = now().date() # Lấy ngày hiện tại

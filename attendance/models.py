@@ -9,8 +9,6 @@ class Attendance(models.Model):
     date = models.DateField()
     check_in = models.DateTimeField(null=True, blank=True)
     check_out = models.DateTimeField(null=True, blank=True)
-    check_in_location = models.CharField(max_length=255, null=True, blank=True)
-    check_out_location = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=10, choices=[('Present', 'Có mặt'),('Late','Trễ giờ'), ('Absent', 'Vắng mặt')])
     reason = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

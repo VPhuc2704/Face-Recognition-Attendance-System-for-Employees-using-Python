@@ -28,7 +28,6 @@ class AdminCreateAttendanceView(APIView):
                 employeeId=employee,
                 date=date.today(),  # Tự lấy ngày hôm nay
                 check_in=datetime.now(),  # Gán giờ hiện tại
-                check_in_location="Tạo bởi Admin", # Tạm thời gán giá trị này
                 status=status_attendance,  # Không kiểm tra gì thêm
                 created_at=datetime.now(),
                 updated_at=datetime.now()
