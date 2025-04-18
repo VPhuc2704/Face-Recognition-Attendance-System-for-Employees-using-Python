@@ -264,15 +264,17 @@ export default function AttendanceCapture() {
   }
 
   // Sửa hàm handleToggleAutoCapture
-  const handleToggleAutoCapture = (enabled: boolean) => {
+  const handleToggleAutoCapture = (enabled: boolean, showNotification: boolean = true) => {
     if (captureImageRef.current) {
       toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
 
-      toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
-        description: enabled
-          ? 'Hệ thống sẽ tự động nhận diện khuôn mặt mỗi 5 giây'
-          : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
-      })
+      if (showNotification) {
+        toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
+          description: enabled
+            ? 'Hệ thống sẽ tự động nhận diện khuôn mặt mỗi 5 giây'
+            : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
+        })
+      }
     }
   }
   // Cập nhật ref khi state thay đổi
@@ -281,6 +283,8 @@ export default function AttendanceCapture() {
     isAutoCapturingRef.current = isAutoCapturing
   }, [autoCapture, isAutoCapturing])
 
+  // Thêm một ref để theo dõi dữ liệu nhận diện đã được xử lý hay chưa
+  const processedDataRef = useRef<string | null>(null)
   // Process recognition results
   useEffect(() => {
     // Nếu mutation đang lỗi, cũng reset trạng thái xử lý API
@@ -289,7 +293,14 @@ export default function AttendanceCapture() {
       isProcessingApi.current = false
     }
 
-    if (!recognitionData) return
+    // Nếu không có dữ liệu mới hoặc dữ liệu đã được xử lý, thoát
+    if (!recognitionData || processedDataRef.current === JSON.stringify(recognitionData)) {
+      return
+    }
+    // Đánh dấu dữ liệu đã được xử lý
+    processedDataRef.current = JSON.stringify(recognitionData)
+    console.log('Xử lý dữ liệu nhận diện mới', recognitionData.status)
+
     isProcessingApi.current = false
 
     // Định nghĩa hành động khôi phục có độ trễ
@@ -297,7 +308,7 @@ export default function AttendanceCapture() {
       if (autoCapture && captureImageRef.current && !isAutoCapturing) {
         setTimeout(() => {
           console.log(`Khôi phục tự động chụp sau ${delay}ms`)
-          toggleAutoCapture(true, captureImageRef.current)
+          handleToggleAutoCapture(true, false)
         }, delay)
       }
     }
