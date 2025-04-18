@@ -215,6 +215,10 @@ export default function AttendanceCapture() {
 
   // Sửa handleStartCamera
   const handleStartCamera = async () => {
+    // Reset trạng thái khi bắt đầu camera mới
+    isProcessingApi.current = false
+    lastApiRequestTime.current = 0
+
     // Đảm bảo tắt auto-capture hiện tại nếu có
     if (isAutoCapturing) {
       toggleAutoCapture(false)
@@ -279,6 +283,12 @@ export default function AttendanceCapture() {
 
   // Process recognition results
   useEffect(() => {
+    // Nếu mutation đang lỗi, cũng reset trạng thái xử lý API
+    if (recognizing === false && isProcessingApi.current) {
+      console.log('API có thể đã gặp lỗi, reset trạng thái')
+      isProcessingApi.current = false
+    }
+
     if (!recognitionData) return
     isProcessingApi.current = false
 
@@ -346,7 +356,7 @@ export default function AttendanceCapture() {
         resumeAutoCaptureLater(7000)
         break
     }
-  }, [recognitionData])
+  }, [recognitionData, recognizing, autoCapture, isAutoCapturing, toggleAutoCapture, pauseAndResume])
 
   return (
     <>
