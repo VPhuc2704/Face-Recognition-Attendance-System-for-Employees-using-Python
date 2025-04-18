@@ -45,6 +45,8 @@ export default function AttendanceCapture() {
 
   const autoCaptuteRef = useRef(autoCapture)
   const isAutoCapturingRef = useRef(isAutoCapturing)
+  const faceDetectedRef = useRef(faceDetected)
+  const isFaceSufficientRef = useRef(isFaceSufficient)
 
   const { mutate: checkIn, isPending: recognizing, data: recognitionData } = useFaceRecognition()
 
@@ -127,8 +129,8 @@ export default function AttendanceCapture() {
       return
     }
 
-    // Kiểm tra có khuôn mặt không
-    if (!faceDetected) {
+    // Kiểm tra có khuôn mặt không - SỬA DỤNG GIÁ TRỊ REF
+    if (!faceDetectedRef.current) {
       // Chỉ hiển thị cảnh báo khi chụp thủ công
       if (!isAutoCapturing) {
         toast.warning('Không phát hiện khuôn mặt', {
@@ -138,8 +140,8 @@ export default function AttendanceCapture() {
       return
     }
 
-    // Kiểm tra khuôn mặt đủ lớn
-    if (!isFaceSufficient) {
+    // Kiểm tra khuôn mặt đủ lớn - SỬA DỤNG GIÁ TRỊ REF
+    if (!isFaceSufficientRef.current) {
       // Chỉ hiển thị cảnh báo khi chụp thủ công
       if (!isAutoCapturing) {
         toast.warning('Khuôn mặt quá nhỏ', {
@@ -199,19 +201,32 @@ export default function AttendanceCapture() {
     videoReady,
     recognizing,
     faceDetected,
+    faceDetectedRef,
     isFaceSufficient,
+    isFaceSufficientRef,
     isAutoCapturing,
     canCapture,
     optimizeImageBase64,
     updateLastCaptureTime,
     checkIn,
-    faceSize
+    faceSize,
+    toggleAutoCapture
   ])
 
   // Gán captureImage vào ref sau khi nó đã được tạo
   useEffect(() => {
     captureImageRef.current = captureImage
   }, [captureImage])
+
+  // Cập nhật ref khi state thay đổi
+  useEffect(() => {
+    faceDetectedRef.current = faceDetected
+  }, [faceDetected])
+
+  // Thêm useEffect để cập nhật ref khi state thay đổi
+  useEffect(() => {
+    isFaceSufficientRef.current = isFaceSufficient
+  }, [isFaceSufficient])
 
   // Sửa handleStartCamera
   const handleStartCamera = async () => {
