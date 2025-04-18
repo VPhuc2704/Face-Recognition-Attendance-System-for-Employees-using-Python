@@ -22,7 +22,9 @@ export default function AttendanceCapture() {
   // State người được nhận diện
   const [recognizedPerson, setRecognizedPerson] = useState<any | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const captureImageRef = useRef<(() => void) | null>(null)
+  const captureImageRef = useRef<(() => void) | undefined>(undefined)
+  const lastApiRequestTime = useRef<number>(0)
+  const isProcessingApi = useRef<boolean>(false)
 
   // Custom hooks
   const { videoRef, cameraActive, videoReady, videoReadyRef, cameraError, startCamera, stopCamera } = useCamera()
@@ -40,6 +42,9 @@ export default function AttendanceCapture() {
     updateLastCaptureTime,
     canCapture
   } = useAutoCapture()
+
+  const autoCaptuteRef = useRef(autoCapture)
+  const isAutoCapturingRef = useRef(isAutoCapturing)
 
   const { mutate: checkIn, isPending: recognizing, data: recognitionData } = useFaceRecognition()
 
@@ -85,6 +90,10 @@ export default function AttendanceCapture() {
 
   // Capture image function
   const captureImage = useCallback(async () => {
+    if (isProcessingApi.current) {
+      console.log('Đang xử lý API trước đó, bỏ qua')
+      return
+    }
     // Ghi log để debug
     console.log('Capture attempt', {
       faceDetected,
@@ -99,8 +108,24 @@ export default function AttendanceCapture() {
     })
 
     // Kiểm tra điều kiện cơ bản sử dụng ref thay vì state
-    if (!videoRef.current || !canvasRef.current || !videoReadyRef.current || recognizing) return
-    if (!canCapture()) return
+    // Kiểm tra điều kiện cơ bản
+    if (!videoRef.current || !canvasRef.current || !videoReadyRef.current || recognizing) {
+      console.log('Không đủ điều kiện để chụp')
+      return
+    }
+
+    if (!canCapture()) {
+      console.log('Chưa đến thời gian chụp tiếp theo')
+      return
+    }
+
+    // Kiểm tra thời gian từ lần gửi API trước
+    const now = Date.now()
+    if (now - lastApiRequestTime.current < 3000) {
+      // 3 giây
+      console.log(`Bỏ qua, vừa gửi API cách đây ${now - lastApiRequestTime.current}ms`)
+      return
+    }
 
     // Kiểm tra có khuôn mặt không
     if (!faceDetected) {
@@ -147,14 +172,25 @@ export default function AttendanceCapture() {
       // Tối ưu kích thước ảnh
       imageBase64 = await optimizeImageBase64(imageBase64)
 
+      isProcessingApi.current = true
+      lastApiRequestTime.current = now
+
       // Cập nhật thời gian chụp gần nhất
       updateLastCaptureTime()
+
+      // Tạm dừng tự động chụp trong khi gửi API
+      const wasAutoCapturing = isAutoCapturing
+      if (wasAutoCapturing) {
+        console.log('Tạm dừng tự động chụp trong khi gửi API')
+        toggleAutoCapture(false)
+      }
 
       // Gửi lên server để nhận diện
       console.log('Sending image for recognition')
       checkIn(imageBase64)
     } catch (err) {
       console.error('Error capturing image:', err)
+      isProcessingApi.current = false
     }
   }, [
     videoRef,
@@ -235,10 +271,29 @@ export default function AttendanceCapture() {
       })
     }
   }
+  // Cập nhật ref khi state thay đổi
+  useEffect(() => {
+    autoCaptuteRef.current = autoCapture
+    isAutoCapturingRef.current = isAutoCapturing
+  }, [autoCapture, isAutoCapturing])
 
   // Process recognition results
   useEffect(() => {
     if (!recognitionData) return
+    isProcessingApi.current = false
+
+    // Định nghĩa hành động khôi phục có độ trễ
+    const resumeAutoCaptureLater = (delay = 2000) => {
+      if (autoCapture && captureImageRef.current && !isAutoCapturing) {
+        setTimeout(() => {
+          console.log(`Khôi phục tự động chụp sau ${delay}ms`)
+          toggleAutoCapture(true, captureImageRef.current)
+        }, delay)
+      }
+    }
+
+    // Thêm ID để tránh toast trùng lặp
+    const toastId = `${recognitionData?.status}-${Date.now()}`
 
     switch (recognitionData?.status) {
       case 'success':
@@ -253,7 +308,8 @@ export default function AttendanceCapture() {
           })
 
           toast.success('Điểm danh thành công', {
-            description: recognitionData.message
+            description: recognitionData.message,
+            id: toastId
           })
 
           // Tạm dừng tự động chụp sau khi nhận diện thành công
@@ -267,7 +323,8 @@ export default function AttendanceCapture() {
 
       case 'warning':
         toast.warning('Thông báo', {
-          description: recognitionData.message
+          description: recognitionData.message,
+          id: toastId
         })
         break
 
@@ -275,18 +332,21 @@ export default function AttendanceCapture() {
         // Chỉ hiển thị thông báo khi chụp thủ công để tránh quá nhiều thông báo
         if (!isAutoCapturing) {
           toast.error('Không nhận diện được', {
-            description: recognitionData.message
+            description: recognitionData.message,
+            id: toastId
           })
         }
         break
 
       case 'error':
         toast.error('Lỗi', {
-          description: recognitionData.message
+          description: recognitionData.message,
+          id: toastId
         })
+        resumeAutoCaptureLater(7000)
         break
     }
-  }, [recognitionData, isAutoCapturing, pauseAndResume, captureImage])
+  }, [recognitionData])
 
   return (
     <>
