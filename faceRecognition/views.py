@@ -91,79 +91,121 @@ class FaceRecognitionView(APIView):
             if recognized_id:
                 try:
                     employee = Employee.objects.get(id=recognized_id)
+                    action = request.data.get("action", "")
+                    if action not in ["check_in", "check_out"]:
+                        return JsonResponse({
+                            "status": "error",
+                            "message": "Trường 'action' bắt buộc và chỉ chấp nhận 'check_in' hoặc 'check_out'"
+                        }, status=400)
                     # Kiểm tra đã điểm danh chưa
                     today = now().date() # Lấy ngày hiện tại
-                    # if Attendance.objects.filter(employeeId_id=recognized_id, date=today).exists(): 
-                    #     return JsonResponse({
-                    #         "status": "warning",
-                    #         "message": f"{employee.full_name()} đã điểm danh hôm nay."
-                    #     })
-                    
-                    # Tạo bản ghi điểm danh
-                    attendance, created = Attendance.objects.get_or_create(
+                    # taor attendance nếu chưa có
+
+                    attendance = Attendance.objects.filter(
                         employeeId_id=recognized_id,
                         date=today,
-                        defaults={"check_in":now()},
-                    )
-                    if created:
-                        return JsonResponse({
-                            "status": "success",
-                            "action": "check_in",
-                            "message": f" {employee.full_name()} đã check-in thành công lúc {attendance.check_in.strftime('%H:%M:%S')}",
-                            "employee":{
-                                "employeeId": recognized_id,
-                                "employee_name": employee.full_name(),
-                                "department": employee.department.name if employee.department else None,
-                                "position": employee.position.name if employee.position else None,
-                                "employee_code": employee.employee_code,
-                            },
-                            "employee":{
-                                "employeeId": recognized_id,
-                                "employee_name": employee.full_name(),
-                                "department": employee.department.name if employee.department else None,
-                                "position": employee.position.name if employee.position else None,
-                                "employee_code": employee.employee_code,
-                            },
-                            "attendance":{
-                                "check_in": now().strftime("%Y-%m-%d %H:%M:%S"),
-                                "status": attendance.status,
-                            }
-                        })
-                    elif not attendance.check_out:
-                        attendance.check_out = now()
-                        attendance.save()
-                        return JsonResponse({
-                            "status": "success",
-                            "action": "check_out",
-                            "message": f"{employee.full_name()} đã check-out thành công lúc {attendance.check_out.strftime('%H:%M:%S')}",
-                            "employee":{
-                                "employeeId": recognized_id,
-                                "employee_name": employee.full_name(),
-                                "department": employee.department.name if employee.department else None,
-                                "position": employee.position.name if employee.position else None,
-                                "employee_code": employee.employee_code,
-                            },
-                            "attendance":{
-                                "check_out": now().strftime("%Y-%m-%d %H:%M:%S"),
-                            }
-                        }) 
-                    else:
-                        return JsonResponse({
-                            "status": "warning",
-                            "message": f"{employee.full_name()} đã điểm danh hôm nay.",
-                            "employee":{
-                                "employeeId": recognized_id,
-                                "employee_name": employee.full_name(),
-                                "department": employee.department.name if employee.department else None,
-                                "position": employee.position.name if employee.position else None,
-                                "employee_code": employee.employee_code,
-                            },
-                            "attendance":{
-                                "check_in": attendance.check_in.strftime("%Y-%m-%d %H:%M:%S"),
-                                "check_out": attendance.check_out.strftime("%Y-%m-%d %H:%M:%S") if attendance.check_out else None,
-                                "status": attendance.status,
-                            }
-                        })
+                    ).first()
+                    if action == "check_in":
+                        if not attendance:
+                            attendance = Attendance.objects.create(
+                                employeeId_id=recognized_id,
+                                date=today,
+                                check_in = now()
+                            )
+                            attendance.save()
+                            return JsonResponse({
+                                "status": "success",
+                                "action": "check_in",
+                                "message": f"{employee.full_name()} đã check-in thành công lúc {attendance.check_in.strftime('%H:%M:%S')}",
+                                "employee": {
+                                    "employeeId": recognized_id,
+                                    "employee_name": employee.full_name(),
+                                    "department": employee.department.name if employee.department else None,
+                                    "position": employee.position.name if employee.position else None,
+                                    "employee_code": employee.employee_code,
+                                },
+                                "attendance": {
+                                    "check_in": attendance.check_in.strftime("%Y-%m-%d %H:%M:%S"),
+                                    "status": attendance.status,
+                                }
+                            })
+                        if not attendance.check_in:
+                            attendance.check_in = now()
+                            attendance.save()
+                            return JsonResponse({
+                                "status": "success",
+                                "action": "check_in",
+                                "message": f" {employee.full_name()} đã check-in thành công lúc {attendance.check_in.strftime('%H:%M:%S')}",
+                                "employee":{
+                                    "employeeId": recognized_id,
+                                    "employee_name": employee.full_name(),
+                                    "department": employee.department.name if employee.department else None,
+                                    "position": employee.position.name if employee.position else None,
+                                    "employee_code": employee.employee_code,
+                                },
+                                "attendance":{
+                                    "check_in": now().strftime("%Y-%m-%d %H:%M:%S"),
+                                    "status": attendance.status,
+                                }
+                            })
+                        else:
+                            return JsonResponse({
+                                "status": "warning",
+                                "message": f"{employee.full_name()} đã check-in hôm nay.",
+                                "employee":{
+                                    "employeeId": recognized_id,
+                                    "employee_name": employee.full_name(),
+                                    "department": employee.department.name if employee.department else None,
+                                    "position": employee.position.name if employee.position else None,
+                                    "employee_code": employee.employee_code,
+                                },
+                                "attendance":{
+                                    "check_in": attendance.check_in.strftime("%Y-%m-%d %H:%M:%S"),
+                                    "check_out": attendance.check_out.strftime("%Y-%m-%d %H:%M:%S") if attendance.check_out else None,
+                                    "status": attendance.status,
+                                }
+                            })
+                    elif action == "check_out":
+                        if not attendance:
+                            return JsonResponse({
+                                "status": "error",
+                                "message": f"{employee.full_name()} chưa check-in hôm nay nên không thể check-out"
+                            }, status=400)
+                        elif not attendance.check_out:
+                            attendance.check_out = now()
+                            attendance.save()
+                            return JsonResponse({
+                                "status": "success",
+                                "action": "check_out",
+                                "message": f"{employee.full_name()} đã check-out thành công lúc {attendance.check_out.strftime('%H:%M:%S')}",
+                                "employee":{
+                                    "employeeId": recognized_id,
+                                    "employee_name": employee.full_name(),
+                                    "department": employee.department.name if employee.department else None,
+                                    "position": employee.position.name if employee.position else None,
+                                    "employee_code": employee.employee_code,
+                                },
+                                "attendance":{
+                                    "check_out": now().strftime("%Y-%m-%d %H:%M:%S"),
+                                }
+                            }) 
+                        else:
+                            return JsonResponse({
+                                "status": "warning",
+                                "message": f"{employee.full_name()} đã check out hôm nay.",
+                                "employee":{
+                                    "employeeId": recognized_id,
+                                    "employee_name": employee.full_name(),
+                                    "department": employee.department.name if employee.department else None,
+                                    "position": employee.position.name if employee.position else None,
+                                    "employee_code": employee.employee_code,
+                                },
+                                "attendance":{
+                                    "check_in": attendance.check_in.strftime("%Y-%m-%d %H:%M:%S"),
+                                    "check_out": attendance.check_out.strftime("%Y-%m-%d %H:%M:%S") if attendance.check_out else None,
+                                    "status": attendance.status,
+                                }
+                            })
                 except Employee.DoesNotExist:
                     return JsonResponse({
                         "status": "error",
