@@ -6,3 +6,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
         model = Attendance
         fields = '__all__'
         
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep.pop('working_hours', None)  
+        return rep

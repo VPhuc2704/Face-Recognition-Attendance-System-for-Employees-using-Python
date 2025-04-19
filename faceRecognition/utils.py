@@ -1,8 +1,11 @@
 
+from functools import lru_cache
 from employees.models import Employee
 from django.conf import settings
 import os
 import face_recognition
+
+@lru_cache(maxsize=20) 
 def load_known_faces():
     known_face_encodings = []
     known_face_ids = []
@@ -18,8 +21,8 @@ def load_known_faces():
                 known_face_encodings.append(encodings[0])
                 known_face_ids.append(emp.id)
             else:
-                print(f"Không tìm thấy khuôn mặt trong ảnh của nhân viên: {emp.full_name}")
+                print(f"Không tìm thấy khuôn mặt trong ảnh của nhân viên: {emp.full_name()}")
         except Exception as e:
-            print(f"Lỗi xử lý ảnh của {emp.full_name}: {e}")
+            print(f"Lỗi xử lý ảnh của nhân viên {emp.full_name()}: {e}")
 
     return known_face_encodings, known_face_ids

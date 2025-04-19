@@ -30,15 +30,22 @@ class FaceRecognitionView(APIView):
             if not image_base64:
                 return JsonResponse({"status": "error", "message": "Không có dữ liệu hình ảnh"}, status=400)
             
-            if "," in image_base64:
-                image_base64 = image_base64.split(",")[1]
+            try:
+                if "," in image_base64:
+                    image_base64 = image_base64.split(",")[1]
 
-            image_data = base64.b64decode(image_base64)
-            np_arr = np.frombuffer(image_data, np.uint8)
-            frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                image_data = base64.b64decode(image_base64)
+                np_arr = np.frombuffer(image_data, np.uint8)
+                frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                if frame is None:
+                    return JsonResponse({"status": "error", "message": "Không thể xữ lý hình ảnh gửi lên"}, status=400) 
+            except (base64.binascii.Error, ValueError) as DecodingError:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Ảnh không hợp lệ hoặc không thể giải mã",
+                    "debug": str(DecodingError)
+                }, status=400)
 
-            if frame is None:
-                return JsonResponse({"status": "error", "message": "Không thể xữ lý hình ảnh gửi lên"}, status=400) 
 
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -70,7 +77,7 @@ class FaceRecognitionView(APIView):
                 
                 for face_encoding in face_encodings:
                     # So sánh với các khuôn mặt đã biết
-                    matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.2)
+                    matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.5)
                     face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
                     
                     if True in matches:
@@ -86,36 +93,77 @@ class FaceRecognitionView(APIView):
                     employee = Employee.objects.get(id=recognized_id)
                     # Kiểm tra đã điểm danh chưa
                     today = now().date() # Lấy ngày hiện tại
-                    if Attendance.objects.filter(employeeId_id=recognized_id, date=today).exists(): 
-                        return JsonResponse({
-                            "status": "warning",
-                            "message": f"{employee.full_name()} đã điểm danh hôm nay."
-                        })
+                    # if Attendance.objects.filter(employeeId_id=recognized_id, date=today).exists(): 
+                    #     return JsonResponse({
+                    #         "status": "warning",
+                    #         "message": f"{employee.full_name()} đã điểm danh hôm nay."
+                    #     })
                     
                     # Tạo bản ghi điểm danh
-                    attendance = Attendance.objects.create(
+                    attendance, created = Attendance.objects.get_or_create(
                         employeeId_id=recognized_id,
                         date=today,
-                        check_in=now(),
-                        check_in_location="Phòng AI",
+                        defaults={"check_in":now()},
                     )
-                    
-                    return JsonResponse({
-                        "status": "success",
-                        "message": f"Điểm danh thành công cho {employee.full_name()}",
-                        "employee":{
-                            "employeeId": recognized_id,
-                            "employee_name": employee.full_name(),
-                            "department": employee.department.name if employee.department else None,
-                            "position": employee.position.name if employee.position else None,
-                            "employee_code": employee.employee_code,
-                        },
-                        "attendance":{
-                            "check_in": now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "status": attendance.status,
-                        }
-                    })
-                
+                    if created:
+                        return JsonResponse({
+                            "status": "success",
+                            "action": "check_in",
+                            "message": f" {employee.full_name()} đã check-in thành công lúc {attendance.check_in.strftime('%H:%M:%S')}",
+                            "employee":{
+                                "employeeId": recognized_id,
+                                "employee_name": employee.full_name(),
+                                "department": employee.department.name if employee.department else None,
+                                "position": employee.position.name if employee.position else None,
+                                "employee_code": employee.employee_code,
+                            },
+                            "employee":{
+                                "employeeId": recognized_id,
+                                "employee_name": employee.full_name(),
+                                "department": employee.department.name if employee.department else None,
+                                "position": employee.position.name if employee.position else None,
+                                "employee_code": employee.employee_code,
+                            },
+                            "attendance":{
+                                "check_in": now().strftime("%Y-%m-%d %H:%M:%S"),
+                                "status": attendance.status,
+                            }
+                        })
+                    elif not attendance.check_out:
+                        attendance.check_out = now()
+                        attendance.save()
+                        return JsonResponse({
+                            "status": "success",
+                            "action": "check_out",
+                            "message": f"{employee.full_name()} đã check-out thành công lúc {attendance.check_out.strftime('%H:%M:%S')}",
+                            "employee":{
+                                "employeeId": recognized_id,
+                                "employee_name": employee.full_name(),
+                                "department": employee.department.name if employee.department else None,
+                                "position": employee.position.name if employee.position else None,
+                                "employee_code": employee.employee_code,
+                            },
+                            "attendance":{
+                                "check_out": now().strftime("%Y-%m-%d %H:%M:%S"),
+                            }
+                        }) 
+                    else:
+                        return JsonResponse({
+                            "status": "warning",
+                            "message": f"{employee.full_name()} đã điểm danh hôm nay.",
+                            "employee":{
+                                "employeeId": recognized_id,
+                                "employee_name": employee.full_name(),
+                                "department": employee.department.name if employee.department else None,
+                                "position": employee.position.name if employee.position else None,
+                                "employee_code": employee.employee_code,
+                            },
+                            "attendance":{
+                                "check_in": attendance.check_in.strftime("%Y-%m-%d %H:%M:%S"),
+                                "check_out": attendance.check_out.strftime("%Y-%m-%d %H:%M:%S") if attendance.check_out else None,
+                                "status": attendance.status,
+                            }
+                        })
                 except Employee.DoesNotExist:
                     return JsonResponse({
                         "status": "error",
