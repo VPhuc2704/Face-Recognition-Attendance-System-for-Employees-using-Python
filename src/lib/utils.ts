@@ -16,6 +16,17 @@ export const formatDate = (dateStr: string | null | undefined) => {
   }
 }
 
+// Hàm định dạng thời gian check-in/check-out
+export const formatAttendanceTime = (timeString: string | null): string => {
+  if (!timeString) return ''
+  try {
+    const date = new Date(timeString)
+    return format(date, 'HH:mm:ss')
+  } catch (e) {
+    return ''
+  }
+}
+
 // Hàm định dạng chuỗi thời gian YYYY-MM-DD HH:MM:SS thành định dạng địa phương
 export const formatDateTime = (dateTimeStr: string | null | undefined) => {
   if (!dateTimeStr) return null

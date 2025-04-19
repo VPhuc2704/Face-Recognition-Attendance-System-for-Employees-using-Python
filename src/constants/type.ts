@@ -137,3 +137,20 @@ export const StatusLabels: Record<StatusType, string> = {
   [Status.Active]: 'Đang làm việc',
   [Status.Inactive]: 'Đã nghỉ việc'
 }
+
+export const AttendanceStatus = {
+  Present: 'Present',
+  Absent: 'Absent',
+  Late: 'Late'
+} as const
+export type AttendanceStatusType = (typeof AttendanceStatus)[keyof typeof AttendanceStatus]
+export const AttendanceStatusValues = [
+  AttendanceStatus.Present,
+  AttendanceStatus.Absent,
+  AttendanceStatus.Late
+] as const
+export const AttendanceStatusLabels: Record<AttendanceStatusType, string> = {
+  [AttendanceStatus.Present]: 'Có mặt',
+  [AttendanceStatus.Absent]: 'Vắng mặt',
+  [AttendanceStatus.Late]: 'Đi muộn'
+}
