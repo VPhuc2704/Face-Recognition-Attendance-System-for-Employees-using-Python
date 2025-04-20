@@ -25,39 +25,36 @@ export function useAutoCapture(options: UseAutoCaptureOptions = {}) {
   }, [])
 
   // Hàm bắt đầu interval chụp tự động
-  const startAutoCapture = useCallback(
-    (captureFunction: () => void) => {
-      console.log('Starting auto capture with interval:', captureInterval)
+  const startAutoCapture = useCallback((captureFunction: () => void) => {
+    console.log('Starting auto capture with interval:', captureInterval)
 
-      // Xóa interval cũ nếu có
+    // Xóa interval cũ nếu có
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+
+    // Tạo interval mới
+    intervalRef.current = setInterval(() => {
+      console.log('Auto capture interval triggered')
+      // Bao bọc bằng try-catch để tránh lỗi
+      try {
+        captureFunction()
+      } catch (error) {
+        console.error('Error in auto capture function:', error)
+      }
+    }, captureInterval)
+
+    setIsAutoCapturing(true)
+
+    return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
+        setIsAutoCapturing(false)
       }
-
-      // Tạo interval mới
-      intervalRef.current = setInterval(() => {
-        console.log('Auto capture interval triggered')
-        // Bao bọc bằng try-catch để tránh lỗi
-        try {
-          captureFunction()
-        } catch (error) {
-          console.error('Error in auto capture function:', error)
-        }
-      }, captureInterval)
-
-      setIsAutoCapturing(true)
-
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current)
-          intervalRef.current = null
-          setIsAutoCapturing(false)
-        }
-      }
-    },
-    [captureInterval]
-  )
+    }
+  }, [])
 
   // Hàm dừng chụp tự động
   const stopAutoCapture = useCallback(() => {

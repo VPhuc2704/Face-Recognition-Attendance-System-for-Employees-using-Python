@@ -7,7 +7,14 @@ import { Loader2, Camera, Check, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFaceRecognition } from '@/hooks/useAttendance'
 import { toast } from 'sonner'
-import { DepartmentLabels, DepartmentType, PositionLabels, PositionType } from '@/constants/type'
+import {
+  ActionStatus,
+  ActionStatusType,
+  DepartmentLabels,
+  DepartmentType,
+  PositionLabels,
+  PositionType
+} from '@/constants/type'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { useFaceDetection } from '@/hooks/useFaceDetection'
@@ -25,6 +32,7 @@ export default function AttendanceCapture() {
   const captureImageRef = useRef<(() => void) | undefined>(undefined)
   const lastApiRequestTime = useRef<number>(0)
   const isProcessingApi = useRef<boolean>(false)
+  const [attendanceMode, setAttendanceMode] = useState<ActionStatusType>(ActionStatus.CheckIn)
 
   // Custom hooks
   const { videoRef, cameraActive, videoReady, videoReadyRef, cameraError, startCamera, stopCamera } = useCamera()
@@ -189,10 +197,18 @@ export default function AttendanceCapture() {
 
       // Gửi lên server để nhận diện
       console.log('Sending image for recognition')
-      checkIn(imageBase64)
+      checkIn({
+        image: imageBase64,
+        action: attendanceMode
+      })
     } catch (err) {
       console.error('Error capturing image:', err)
       isProcessingApi.current = false
+
+      // Hiển thị thông báo lỗi chụp ảnh
+      toast.error('Lỗi chụp ảnh', {
+        description: 'Không thể xử lý hình ảnh. Vui lòng thử lại.'
+      })
     }
   }, [
     videoRef,
@@ -210,8 +226,35 @@ export default function AttendanceCapture() {
     updateLastCaptureTime,
     checkIn,
     faceSize,
-    toggleAutoCapture
+    toggleAutoCapture,
+    attendanceMode
   ])
+
+  // Hàm xử lý và hiển thị lỗi từ backend
+  const handleBackendError = useCallback((error: any) => {
+    let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại sau'
+
+    // Kiểm tra các trường hợp lỗi cụ thể từ backend
+    if (error?.message) {
+      if (error.message.includes('Không phát hiện khuôn mặt')) {
+        errorMessage = 'Không phát hiện được khuôn mặt trong hình ảnh'
+      } else if (error.message.includes('Không có dữ liệu khuôn mặt')) {
+        errorMessage = 'Chưa có dữ liệu khuôn mặt trong hệ thống'
+      } else if (error.message.includes('check-in hôm nay')) {
+        errorMessage = 'Nhân viên đã check-in hôm nay'
+      } else if (error.message.includes('check out hôm nay')) {
+        errorMessage = 'Nhân viên đã check-out hôm nay'
+      } else if (error.message.includes('chưa check-in')) {
+        errorMessage = 'Nhân viên phải check-in trước khi check-out'
+      } else {
+        errorMessage = error.message
+      }
+    }
+
+    toast.error('Điểm danh thất bại', {
+      description: errorMessage
+    })
+  }, [])
 
   // Gán captureImage vào ref sau khi nó đã được tạo
   useEffect(() => {
@@ -327,10 +370,6 @@ export default function AttendanceCapture() {
         }, delay)
       }
     }
-
-    // Thêm ID để tránh toast trùng lặp
-    const toastId = `${recognitionData?.status}-${Date.now()}`
-
     switch (recognitionData?.status) {
       case 'success':
         if (recognitionData.employee) {
@@ -340,12 +379,15 @@ export default function AttendanceCapture() {
             department: recognitionData.employee.department,
             position: recognitionData.employee.position,
             employeeCode: recognitionData.employee.employee_code,
-            checkInTime: recognitionData.attendance?.check_in || new Date().toLocaleString()
+            checkInTime:
+              recognitionData.attendance?.check_in ||
+              recognitionData.attendance?.check_out ||
+              new Date().toLocaleString(),
+            mode: recognitionData.status || attendanceMode // lưu mode để hiển thị đúng
           })
 
           toast.success('Điểm danh thành công', {
-            description: recognitionData.message,
-            id: toastId
+            description: recognitionData.message
           })
 
           // Tạm dừng tự động chụp sau khi nhận diện thành công
@@ -358,31 +400,45 @@ export default function AttendanceCapture() {
         break
 
       case 'warning':
-        toast.warning('Thông báo', {
-          description: recognitionData.message,
-          id: toastId
+        // Hiển thị nhiều thông tin hơn trong toast
+        toast.warning('Nhân viên đã điểm danh', {
+          description: recognitionData.message
         })
+
+        // Vẫn cập nhật thông tin người dùng để hiển thị
+        if (recognitionData.employee) {
+          setRecognizedPerson({
+            id: recognitionData.employee.employeeId,
+            name: recognitionData.employee.employee_name,
+            department: recognitionData.employee.department,
+            position: recognitionData.employee.position,
+            employeeCode: recognitionData.employee.employee_code,
+            checkInTime:
+              recognitionData.attendance?.check_in ||
+              recognitionData.attendance?.check_out ||
+              new Date().toLocaleString(),
+            mode: recognitionData.status || attendanceMode
+          })
+        }
         break
 
       case 'fail':
         // Chỉ hiển thị thông báo khi chụp thủ công để tránh quá nhiều thông báo
         if (!isAutoCapturing) {
           toast.error('Không nhận diện được', {
-            description: recognitionData.message,
-            id: toastId
+            description: recognitionData.message
           })
         }
         break
 
       case 'error':
         toast.error('Lỗi', {
-          description: recognitionData.message,
-          id: toastId
+          description: recognitionData.message
         })
         resumeAutoCaptureLater(7000)
         break
     }
-  }, [recognitionData, recognizing, autoCapture, isAutoCapturing, toggleAutoCapture, pauseAndResume])
+  }, [recognitionData, recognizing, autoCapture, isAutoCapturing, toggleAutoCapture, pauseAndResume, attendanceMode])
 
   return (
     <>
@@ -398,14 +454,30 @@ export default function AttendanceCapture() {
               <CardTitle>Camera nhận diện</CardTitle>
               <CardDescription>Đặt khuôn mặt trong khung hình để hệ thống nhận diện</CardDescription>
             </div>
-            <div className='flex items-center space-x-2'>
-              <Switch
-                id='auto-mode'
-                checked={autoCapture}
-                onCheckedChange={handleToggleAutoCapture}
-                disabled={!cameraActive || !videoReady}
-              />
-              <Label htmlFor='auto-mode'>Tự động nhận diện</Label>
+            <div className='flex flex-col gap-2'>
+              {/* Thêm switch chọn mode check-in/check-out */}
+              <div className='flex items-center space-x-2'>
+                <Switch
+                  id='attendance-mode'
+                  checked={attendanceMode === 'check_out'}
+                  onCheckedChange={(checked) => setAttendanceMode(checked ? 'check_out' : 'check_in')}
+                  disabled={!cameraActive || !videoReady || recognizing}
+                />
+                <Label htmlFor='attendance-mode'>
+                  {attendanceMode === 'check_in' ? 'Chế độ Check-in' : 'Chế độ Check-out'}
+                </Label>
+              </div>
+
+              {/* Switch tự động điểm danh giữ nguyên */}
+              <div className='flex items-center space-x-2'>
+                <Switch
+                  id='auto-mode'
+                  checked={autoCapture}
+                  onCheckedChange={handleToggleAutoCapture}
+                  disabled={!cameraActive || !videoReady}
+                />
+                <Label htmlFor='auto-mode'>Tự động nhận diện</Label>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -553,6 +625,7 @@ export default function AttendanceCapture() {
           </CardFooter>
         </Card>
 
+        {/* Card hiển thị kết quả nhận diện */}
         <Card>
           <CardHeader>
             <CardTitle>Kết quả nhận diện</CardTitle>
@@ -566,6 +639,13 @@ export default function AttendanceCapture() {
                     <Check className='h-8 w-8 text-green-600 dark:text-green-400' />
                   </div>
                   <h3 className='text-xl font-semibold'>{recognizedPerson.name}</h3>
+                  {/* Hiển thị trạng thái là check-in hay check-out thành công */}
+                  <Badge
+                    className='mt-1'
+                    variant={recognizedPerson.mode === ActionStatus.CheckIn ? 'default' : 'secondary'}
+                  >
+                    {recognizedPerson.mode === 'check_in' ? 'Check-in' : 'Check-out'}
+                  </Badge>
                   {recognizedPerson.department && (
                     <Badge className='mt-1'>
                       {DepartmentLabels[recognizedPerson.department as DepartmentType] || recognizedPerson.department}

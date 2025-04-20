@@ -5,6 +5,8 @@
 //   TableToken: 'TableToken'
 // } as const
 
+import { Check } from 'lucide-react'
+
 export const Role = {
   Admin: 'admin',
   Employee: 'staff'
@@ -154,3 +156,17 @@ export const AttendanceStatusLabels: Record<AttendanceStatusType, string> = {
   [AttendanceStatus.Absent]: 'Vắng mặt',
   [AttendanceStatus.Late]: 'Đi muộn'
 }
+
+export const FaceRecognitionStatus = {
+  Success: 'success',
+  Warning: 'warning',
+  Error: 'error',
+  Fail: 'fail'
+} as const
+export type FaceRecognitionStatusType = (typeof FaceRecognitionStatus)[keyof typeof FaceRecognitionStatus]
+
+export const ActionStatus = {
+  CheckIn: 'check_in',
+  CheckOut: 'check_out'
+} as const
+export type ActionStatusType = (typeof ActionStatus)[keyof typeof ActionStatus]

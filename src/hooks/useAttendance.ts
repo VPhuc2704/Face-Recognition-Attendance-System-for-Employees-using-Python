@@ -4,11 +4,11 @@ import { toast } from 'sonner'
 
 export const useFaceRecognition = () => {
   return useMutation({
-    mutationFn: (imageBase64: string) => faceRecognitionService.checkIn(imageBase64),
+    mutationFn: faceRecognitionService.checkIn,
     onError: (error) => {
       console.error('Face recognition error:', error)
-      toast.error('lỗi', {
-        description: 'Đã xảy ra lỗi khi kết nối với máy chủ.'
+      toast.error('Lỗi kết nối', {
+        description: error.message || 'Đã xảy ra lỗi khi kết nối với máy chủ.'
       })
     }
   })
