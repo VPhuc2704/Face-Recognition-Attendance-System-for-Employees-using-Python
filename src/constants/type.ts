@@ -126,3 +126,14 @@ export const PositionLabels: Record<PositionType, string> = {
   [Position.Intern]: 'Thực tập sinh',
   [Position.Other]: 'Khác'
 }
+
+export const Status = {
+  Active: 'Active',
+  Inactive: 'Inactive'
+} as const
+export type StatusType = (typeof Status)[keyof typeof Status]
+export const StatusValues = [Status.Active, Status.Inactive] as const
+export const StatusLabels: Record<StatusType, string> = {
+  [Status.Active]: 'Đang làm việc',
+  [Status.Inactive]: 'Đã nghỉ việc'
+}
