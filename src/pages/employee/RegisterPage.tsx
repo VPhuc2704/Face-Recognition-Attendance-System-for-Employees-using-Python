@@ -252,7 +252,7 @@ export default function RegisterPage() {
                 <div className='space-y-4'>
                   <FormField
                     control={form.control}
-                    name='lastName'
+                    name='firstName'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Họ</FormLabel>
@@ -266,7 +266,7 @@ export default function RegisterPage() {
 
                   <FormField
                     control={form.control}
-                    name='firstName'
+                    name='lastName'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Tên đệm và tên</FormLabel>
