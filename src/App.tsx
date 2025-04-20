@@ -22,14 +22,7 @@ import Profile from './pages/employee/Profile'
 import Attendance from './pages/employee/Attendance'
 
 // Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1
-    }
-  }
-})
+const queryClient = new QueryClient()
 
 function App() {
   return (
