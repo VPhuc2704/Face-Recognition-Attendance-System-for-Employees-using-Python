@@ -23,8 +23,8 @@ export type LoginResType = z.infer<typeof LoginRes>
 // Schema cho form đăng ký
 export const RegisterBody = z
   .object({
-    lastName: z.string().min(1, 'Họ không được để trống').max(50, 'Họ không được vượt quá 50 ký tự'),
-    firstName: z
+    firstName: z.string().min(1, 'Họ không được để trống').max(50, 'Họ không được vượt quá 50 ký tự'),
+    lastName: z
       .string()
       .min(1, 'Tên đệm và tên không được để trống')
       .max(50, 'Tên đệm và tên không được vượt quá 50 ký tự'),
