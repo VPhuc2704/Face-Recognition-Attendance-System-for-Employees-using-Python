@@ -480,19 +480,24 @@ export default function AttendanceCapture() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className='overflow-hidden'>
             <div className='flex flex-col items-center space-y-4'>
-              <div className='relative w-full aspect-video border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800'>
-                {/* Video element */}
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className={`absolute top-0 left-0 w-full h-full object-cover ${cameraActive ? 'block' : 'hidden'}`}
-                  style={{ transform: 'scaleX(-1)' }}
-                />
-
+              {/* Sử dụng chiều cao cố định thay vì aspect-ratio */}
+              <div
+                className='relative w-full border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800'
+                style={{ height: 'calc(min(60vh, 56.25vw))' }} // 16:9 ratio but capped at 60vh
+              >
+                {/* Reset cách hiển thị của video */}
+                <div className='absolute inset-0 flex items-center justify-center'>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`max-w-full max-h-full ${cameraActive ? 'block' : 'hidden'}`}
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                </div>
                 {/* Camera waiting state */}
                 {cameraActive && !videoReady && (
                   <div className='absolute inset-0 flex items-center justify-center'>
