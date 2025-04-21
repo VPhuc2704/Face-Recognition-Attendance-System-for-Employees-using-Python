@@ -13,6 +13,7 @@ import {
   DepartmentLabels,
   DepartmentType,
   FaceRecognitionStatus,
+  FaceRecognitionStatusType,
   PositionLabels,
   PositionType
 } from '@/constants/type'
@@ -49,7 +50,9 @@ export default function AttendanceCapture() {
     toggleAutoCapture,
     pauseAndResume,
     updateLastCaptureTime,
-    canCapture
+    canCapture,
+    scheduleNextCapture,
+    stopAutoCapture
   } = useAutoCapture()
 
   const autoCaptuteRef = useRef(autoCapture)
@@ -193,7 +196,7 @@ export default function AttendanceCapture() {
       const wasAutoCapturing = isAutoCapturing
       if (wasAutoCapturing) {
         console.log('Tạm dừng tự động chụp trong khi gửi API')
-        toggleAutoCapture(false)
+        stopAutoCapture()
       }
 
       // Gửi lên server để nhận diện
@@ -425,32 +428,68 @@ export default function AttendanceCapture() {
     }
   }, [recognitionData, recognizing])
 
+  // // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
+  // useEffect(() => {
+  //   if (!recognitionData) return
+
+  //   // Định nghĩa hành động khôi phục có độ trễ
+  //   const resumeAutoCaptureLater = (delay = 2000) => {
+  //     if (autoCapture && captureImageRef.current && !isAutoCapturing) {
+  //       setTimeout(() => {
+  //         console.log(`Khôi phục tự động chụp sau ${delay}ms`)
+  //         handleToggleAutoCapture(true, false)
+  //       }, delay)
+  //     }
+  //   }
+
+  //   // Xử lý tạm dừng và khôi phục tự động chụp
+  //   if (recognitionData.status === 'success' || recognitionData.status === 'warning') {
+  //     if (isAutoCapturing && captureImageRef.current) {
+  //       console.log('Tạm dừng auto capture sau khi có kết quả API')
+  //       pauseAndResume(captureImageRef.current)
+  //     }
+  //   } else if (recognitionData.status === 'error') {
+  //     resumeAutoCaptureLater(7000) // Lỗi nên chờ lâu hơn
+  //   } else if (recognitionData.status === 'fail') {
+  //     resumeAutoCaptureLater(5000) // Không nhận diện được, thử lại sau 5s
+  //   }
+  // }, [recognitionData, autoCapture, isAutoCapturing, pauseAndResume, handleToggleAutoCapture])
+
   // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
   useEffect(() => {
     if (!recognitionData) return
 
-    // Định nghĩa hành động khôi phục có độ trễ
-    const resumeAutoCaptureLater = (delay = 2000) => {
-      if (autoCapture && captureImageRef.current && !isAutoCapturing) {
-        setTimeout(() => {
-          console.log(`Khôi phục tự động chụp sau ${delay}ms`)
-          handleToggleAutoCapture(true, false)
-        }, delay)
-      }
-    }
+    // Nếu đang ở chế độ tự động và có kết quả API, lên lịch cho lần chụp tiếp theo
+    if (autoCapture && captureImageRef.current) {
+      const delay = getDelayBasedOnStatus(recognitionData.status)
 
-    // Xử lý tạm dừng và khôi phục tự động chụp
-    if (recognitionData.status === 'success' || recognitionData.status === 'warning') {
-      if (isAutoCapturing && captureImageRef.current) {
-        console.log('Tạm dừng auto capture sau khi có kết quả API')
-        pauseAndResume(captureImageRef.current)
-      }
-    } else if (recognitionData.status === 'error') {
-      resumeAutoCaptureLater(7000) // Lỗi nên chờ lâu hơn
-    } else if (recognitionData.status === 'fail') {
-      resumeAutoCaptureLater(5000) // Không nhận diện được, thử lại sau 5s
+      // Chờ một khoảng thời gian trước khi tiếp tục tự động nhận diện
+      setTimeout(() => {
+        console.log(`Tiếp tục tự động nhận diện sau ${delay}ms`)
+
+        // Bắt đầu chu kỳ chụp tiếp theo nếu vẫn đang ở chế độ tự động
+        if (autoCapture && captureImageRef.current) {
+          scheduleNextCapture(captureImageRef.current, 50) // Bắt đầu chụp ngay lần tiếp theo
+        }
+      }, delay)
     }
-  }, [recognitionData, autoCapture, isAutoCapturing, pauseAndResume, handleToggleAutoCapture])
+  }, [recognitionData, autoCapture])
+
+  // Hàm helper để xác định thời gian chờ dựa trên kết quả API
+  const getDelayBasedOnStatus = (status: FaceRecognitionStatusType) => {
+    switch (status) {
+      case 'success':
+        return 5000 // 5 giây để người dùng xem kết quả thành công
+      case 'warning':
+        return 5000 // 5 giây cho cảnh báo đã điểm danh
+      case 'error':
+        return 5000 // 5 giây cho lỗi
+      case 'fail':
+        return 3000 // 3 giây khi không nhận diện được
+      default:
+        return 5000
+    }
+  }
 
   return (
     <>

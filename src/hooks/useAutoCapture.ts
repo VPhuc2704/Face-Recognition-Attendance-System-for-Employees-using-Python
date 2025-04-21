@@ -31,7 +31,7 @@ export function useAutoCapture(options: UseAutoCaptureOptions = {}) {
 
   // Dừng timeout hiện tại
   const stopAutoCapture = useCallback(() => {
-    console.log('Stopping auto capture')
+    console.log('Stopping current auto capture process')
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
@@ -128,6 +128,7 @@ export function useAutoCapture(options: UseAutoCaptureOptions = {}) {
     stopAutoCapture,
     pauseAndResume,
     updateLastCaptureTime,
-    canCapture
+    canCapture,
+    scheduleNextCapture
   }
 }
