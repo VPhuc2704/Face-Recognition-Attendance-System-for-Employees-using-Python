@@ -331,7 +331,7 @@ export default function AttendanceCapture() {
         if (showNotification) {
           toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
             description: enabled
-              ? 'Hệ thống sẽ tự động nhận diện khuôn mặt mỗi 5 giây'
+              ? 'Hệ thống sẽ tự động nhận diện khuôn mặt ngay lập tức, sau mỗi lần nhận diện sẽ đợi toast biến mất'
               : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
           })
         }
@@ -440,13 +440,15 @@ export default function AttendanceCapture() {
     }
 
     // Xử lý tạm dừng và khôi phục tự động chụp
-    if (recognitionData.status === 'success') {
+    if (recognitionData.status === 'success' || recognitionData.status === 'warning') {
       if (isAutoCapturing && captureImageRef.current) {
-        console.log('Tạm dừng interval sau nhận diện thành công')
+        console.log('Tạm dừng auto capture sau khi có kết quả API')
         pauseAndResume(captureImageRef.current)
       }
     } else if (recognitionData.status === 'error') {
-      resumeAutoCaptureLater(7000)
+      resumeAutoCaptureLater(7000) // Lỗi nên chờ lâu hơn
+    } else if (recognitionData.status === 'fail') {
+      resumeAutoCaptureLater(5000) // Không nhận diện được, thử lại sau 5s
     }
   }, [recognitionData, autoCapture, isAutoCapturing, pauseAndResume, handleToggleAutoCapture])
 
