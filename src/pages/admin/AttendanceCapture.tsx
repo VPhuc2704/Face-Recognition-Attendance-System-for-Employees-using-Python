@@ -12,6 +12,7 @@ import {
   ActionStatusType,
   DepartmentLabels,
   DepartmentType,
+  FaceRecognitionStatus,
   PositionLabels,
   PositionType
 } from '@/constants/type'
@@ -341,8 +342,6 @@ export default function AttendanceCapture() {
     isAutoCapturingRef.current = isAutoCapturing
   }, [autoCapture, isAutoCapturing])
 
-  // Thêm một ref để theo dõi dữ liệu nhận diện đã được xử lý hay chưa
-  const processedDataRef = useRef<string | null>(null)
   // Process recognition results
   useEffect(() => {
     // Nếu mutation đang lỗi, cũng reset trạng thái xử lý API
@@ -351,14 +350,12 @@ export default function AttendanceCapture() {
       isProcessingApi.current = false
     }
 
-    // Nếu không có dữ liệu mới hoặc dữ liệu đã được xử lý, thoát
-    if (!recognitionData || processedDataRef.current === JSON.stringify(recognitionData)) {
+    // Nếu không có dữ liệu mới, thoát
+    if (!recognitionData) {
       return
     }
-    // Đánh dấu dữ liệu đã được xử lý
-    processedDataRef.current = JSON.stringify(recognitionData)
-    console.log('Xử lý dữ liệu nhận diện mới', recognitionData.status)
 
+    console.log('Xử lý dữ liệu nhận diện mới', recognitionData.status)
     isProcessingApi.current = false
 
     // Định nghĩa hành động khôi phục có độ trễ
@@ -553,7 +550,7 @@ export default function AttendanceCapture() {
                     </div>
 
                     {/* Recently recognized person overlay - briefly show */}
-                    {recognizedPerson && (
+                    {recognizedPerson && recognizedPerson.mode === FaceRecognitionStatus.Success && (
                       <div className='absolute top-4 left-4 right-4'>
                         <Alert className='bg-green-100/90 dark:bg-green-900/90 border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top duration-300'>
                           <Check className='h-4 w-4 text-green-700 dark:text-green-300' />
