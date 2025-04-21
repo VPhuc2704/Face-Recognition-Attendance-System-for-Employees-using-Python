@@ -322,25 +322,30 @@ export default function AttendanceCapture() {
     setRecognizedPerson(null)
   }
 
-  // Sửa hàm handleToggleAutoCapture
-  const handleToggleAutoCapture = (enabled: boolean, showNotification: boolean = true) => {
-    if (captureImageRef.current) {
-      toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
+  // Sửa hàm handleToggleAutoCapture với useCallback
+  const handleToggleAutoCapture = useCallback(
+    (enabled: boolean, showNotification: boolean = true) => {
+      if (captureImageRef.current) {
+        toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
 
-      if (showNotification) {
-        toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
-          description: enabled
-            ? 'Hệ thống sẽ tự động nhận diện khuôn mặt mỗi 5 giây'
-            : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
-        })
+        if (showNotification) {
+          toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
+            description: enabled
+              ? 'Hệ thống sẽ tự động nhận diện khuôn mặt mỗi 5 giây'
+              : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
+          })
+        }
       }
-    }
-  }
+    },
+    [toggleAutoCapture] // Chỉ phụ thuộc vào toggleAutoCapture
+  )
   // Cập nhật ref khi state thay đổi
   useEffect(() => {
     autoCaptuteRef.current = autoCapture
     isAutoCapturingRef.current = isAutoCapturing
   }, [autoCapture, isAutoCapturing])
+
+  const processedDataRef = useRef<string | null>(null)
 
   // Process recognition results
   useEffect(() => {
@@ -350,23 +355,14 @@ export default function AttendanceCapture() {
       isProcessingApi.current = false
     }
 
-    // Nếu không có dữ liệu mới, thoát
-    if (!recognitionData) {
+    // Nếu không có dữ liệu mới hoặc đã xử lý dữ liệu này rồi, thoát
+    if (!recognitionData || processedDataRef.current === JSON.stringify(recognitionData)) {
       return
     }
 
     console.log('Xử lý dữ liệu nhận diện mới', recognitionData.status)
     isProcessingApi.current = false
 
-    // Định nghĩa hành động khôi phục có độ trễ
-    const resumeAutoCaptureLater = (delay = 2000) => {
-      if (autoCapture && captureImageRef.current && !isAutoCapturing) {
-        setTimeout(() => {
-          console.log(`Khôi phục tự động chụp sau ${delay}ms`)
-          handleToggleAutoCapture(true, false)
-        }, delay)
-      }
-    }
     switch (recognitionData?.status) {
       case 'success':
         if (recognitionData.employee) {
@@ -386,13 +382,6 @@ export default function AttendanceCapture() {
           toast.success('Điểm danh thành công', {
             description: recognitionData.message
           })
-
-          // Tạm dừng tự động chụp sau khi nhận diện thành công
-          // Tạm dừng tự động chụp sau khi nhận diện thành công
-          if (isAutoCapturing && captureImageRef.current) {
-            console.log('Tạm dừng interval sau nhận diện thành công')
-            pauseAndResume(captureImageRef.current)
-          }
         }
         break
 
@@ -432,10 +421,34 @@ export default function AttendanceCapture() {
         toast.error('Lỗi', {
           description: recognitionData.message
         })
-        resumeAutoCaptureLater(7000)
         break
     }
-  }, [recognitionData, recognizing, autoCapture, isAutoCapturing, toggleAutoCapture, pauseAndResume, attendanceMode])
+  }, [recognitionData, recognizing])
+
+  // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
+  useEffect(() => {
+    if (!recognitionData) return
+
+    // Định nghĩa hành động khôi phục có độ trễ
+    const resumeAutoCaptureLater = (delay = 2000) => {
+      if (autoCapture && captureImageRef.current && !isAutoCapturing) {
+        setTimeout(() => {
+          console.log(`Khôi phục tự động chụp sau ${delay}ms`)
+          handleToggleAutoCapture(true, false)
+        }, delay)
+      }
+    }
+
+    // Xử lý tạm dừng và khôi phục tự động chụp
+    if (recognitionData.status === 'success') {
+      if (isAutoCapturing && captureImageRef.current) {
+        console.log('Tạm dừng interval sau nhận diện thành công')
+        pauseAndResume(captureImageRef.current)
+      }
+    } else if (recognitionData.status === 'error') {
+      resumeAutoCaptureLater(7000)
+    }
+  }, [recognitionData, autoCapture, isAutoCapturing, pauseAndResume, handleToggleAutoCapture])
 
   return (
     <>
