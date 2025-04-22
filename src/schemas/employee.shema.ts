@@ -28,7 +28,8 @@ export const ProfileUpdateBody = z.object({
   phone: z.string().nullable(),
   address: z.string().nullable(),
   gender: z.string().nullable(),
-  date_of_birth: z.string().nullable()
+  date_of_birth: z.string().nullable(),
+  employeeImg: z.instanceof(File).optional()
 })
 
 export type ProfileUpdateBodyType = z.infer<typeof ProfileUpdateBody>
