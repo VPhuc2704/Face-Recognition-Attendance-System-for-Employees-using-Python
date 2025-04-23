@@ -12,6 +12,8 @@ import {
   ActionStatusType,
   DepartmentLabels,
   DepartmentType,
+  FaceRecognitionStatus,
+  FaceRecognitionStatusType,
   PositionLabels,
   PositionType
 } from '@/constants/type'
@@ -48,7 +50,9 @@ export default function AttendanceCapture() {
     toggleAutoCapture,
     pauseAndResume,
     updateLastCaptureTime,
-    canCapture
+    canCapture,
+    scheduleNextCapture,
+    stopAutoCapture
   } = useAutoCapture()
 
   const autoCaptuteRef = useRef(autoCapture)
@@ -106,9 +110,9 @@ export default function AttendanceCapture() {
     }
     // Ghi log để debug
     console.log('Capture attempt', {
-      faceDetected,
+      faceDetected: faceDetectedRef.current,
       faceSize,
-      isFaceSufficient,
+      isFaceSufficient: isFaceSufficientRef.current,
       videoReady,
       videoReadyRef: videoReadyRef?.current,
       recognizing,
@@ -116,11 +120,15 @@ export default function AttendanceCapture() {
       isAutoCapturing,
       time: new Date().toISOString()
     })
-
-    // Kiểm tra điều kiện cơ bản sử dụng ref thay vì state
     // Kiểm tra điều kiện cơ bản
     if (!videoRef.current || !canvasRef.current || !videoReadyRef.current || recognizing) {
       console.log('Không đủ điều kiện để chụp')
+
+      // THAY ĐỔI: Nếu đang ở chế độ tự động, lên lịch chụp lại
+      if (isAutoCapturing && captureImageRef.current) {
+        scheduleNextCapture(captureImageRef.current, 1000) // 1 giây sau sẽ thử lại
+        console.log('Lên lịch thử lại sau 1 giây do camera chưa sẵn sàng hoặc đang xử lý')
+      }
       return
     }
 
@@ -137,24 +145,33 @@ export default function AttendanceCapture() {
       return
     }
 
-    // Kiểm tra có khuôn mặt không - SỬA DỤNG GIÁ TRỊ REF
+    // Thay vì return luôn, chỉ hiển thị toast và lên lịch chụp lại nếu đang ở chế độ tự động
     if (!faceDetectedRef.current) {
-      // Chỉ hiển thị cảnh báo khi chụp thủ công
       if (!isAutoCapturing) {
         toast.warning('Không phát hiện khuôn mặt', {
           description: 'Vui lòng đảm bảo khuôn mặt của bạn nằm trong khung hình'
         })
+      } else {
+        // Đang ở chế độ tự động, lên lịch chụp lại sau 1 giây
+        console.log('Không phát hiện được khuôn mặt, sẽ thử lại sau 1 giây')
+        if (captureImageRef.current) {
+          scheduleNextCapture(captureImageRef.current, 1000)
+        }
       }
       return
     }
 
-    // Kiểm tra khuôn mặt đủ lớn - SỬA DỤNG GIÁ TRỊ REF
     if (!isFaceSufficientRef.current) {
-      // Chỉ hiển thị cảnh báo khi chụp thủ công
       if (!isAutoCapturing) {
         toast.warning('Khuôn mặt quá nhỏ', {
           description: 'Vui lòng di chuyển gần camera hơn'
         })
+      } else {
+        // Đang ở chế độ tự động, lên lịch chụp lại sau 1 giây
+        console.log('Khuôn mặt quá nhỏ, sẽ thử lại sau 1 giây')
+        if (captureImageRef.current) {
+          scheduleNextCapture(captureImageRef.current, 1000)
+        }
       }
       return
     }
@@ -163,7 +180,12 @@ export default function AttendanceCapture() {
       const video = videoRef.current
       const canvas = canvasRef.current
       const context = canvas.getContext('2d')
-      if (!context) return
+      if (!context) {
+        if (isAutoCapturing && captureImageRef.current) {
+          scheduleNextCapture(captureImageRef.current, 1000) // Thử lại sau 1 giây
+        }
+        return
+      }
 
       // Cập nhật kích thước canvas
       canvas.width = video.videoWidth
@@ -192,7 +214,7 @@ export default function AttendanceCapture() {
       const wasAutoCapturing = isAutoCapturing
       if (wasAutoCapturing) {
         console.log('Tạm dừng tự động chụp trong khi gửi API')
-        toggleAutoCapture(false)
+        stopAutoCapture()
       }
 
       // Gửi lên server để nhận diện
@@ -209,6 +231,11 @@ export default function AttendanceCapture() {
       toast.error('Lỗi chụp ảnh', {
         description: 'Không thể xử lý hình ảnh. Vui lòng thử lại.'
       })
+
+      // THAY ĐỔI: Nếu đang ở chế độ tự động, lên lịch chụp lại sau lỗi
+      if (isAutoCapturing && captureImageRef.current) {
+        scheduleNextCapture(captureImageRef.current, 3000) // 3 giây sau khi có lỗi
+      }
     }
   }, [
     videoRef,
@@ -227,7 +254,8 @@ export default function AttendanceCapture() {
     checkIn,
     faceSize,
     toggleAutoCapture,
-    attendanceMode
+    attendanceMode,
+    scheduleNextCapture
   ])
 
   // Hàm xử lý và hiển thị lỗi từ backend
@@ -321,55 +349,64 @@ export default function AttendanceCapture() {
     setRecognizedPerson(null)
   }
 
-  // Sửa hàm handleToggleAutoCapture
-  const handleToggleAutoCapture = (enabled: boolean, showNotification: boolean = true) => {
-    if (captureImageRef.current) {
-      toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
+  // Sửa hàm handleToggleAutoCapture với useCallback
+  const handleToggleAutoCapture = useCallback(
+    (enabled: boolean, showNotification: boolean = true) => {
+      if (captureImageRef.current) {
+        toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
 
-      if (showNotification) {
-        toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
-          description: enabled
-            ? 'Hệ thống sẽ tự động nhận diện khuôn mặt mỗi 5 giây'
-            : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
-        })
+        if (showNotification) {
+          toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
+            description: enabled
+              ? 'Hệ thống sẽ tự động nhận diện khuôn mặt ngay lập tức, sau mỗi lần nhận diện sẽ đợi toast biến mất'
+              : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
+          })
+        }
       }
-    }
-  }
+    },
+    [toggleAutoCapture] // Chỉ phụ thuộc vào toggleAutoCapture
+  )
   // Cập nhật ref khi state thay đổi
   useEffect(() => {
     autoCaptuteRef.current = autoCapture
     isAutoCapturingRef.current = isAutoCapturing
+    // Nếu đang bật tự động chụp nhưng không có hoạt động nào được lên lịch
+    if (autoCapture && !isAutoCapturing && captureImageRef.current) {
+      console.log('Phát hiện chế độ tự động đang bật nhưng không có chụp đang diễn ra, khởi động lại')
+      // Thử khởi động lại chế độ tự động sau 2 giây
+      const timer = setTimeout(() => {
+        if (autoCapture && captureImageRef.current && !isAutoCapturing) {
+          scheduleNextCapture(captureImageRef.current, 50)
+        }
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
   }, [autoCapture, isAutoCapturing])
 
-  // Thêm một ref để theo dõi dữ liệu nhận diện đã được xử lý hay chưa
   const processedDataRef = useRef<string | null>(null)
+
   // Process recognition results
   useEffect(() => {
     // Nếu mutation đang lỗi, cũng reset trạng thái xử lý API
     if (recognizing === false && isProcessingApi.current) {
       console.log('API có thể đã gặp lỗi, reset trạng thái')
       isProcessingApi.current = false
+      // THAY ĐỔI: Lên lịch chụp lại nếu đang ở chế độ tự động
+      if (autoCapture && captureImageRef.current) {
+        console.log('Lên lịch thử lại sau 3 giây do API có thể gặp lỗi')
+        scheduleNextCapture(captureImageRef.current, 3000)
+      }
     }
 
-    // Nếu không có dữ liệu mới hoặc dữ liệu đã được xử lý, thoát
+    // Nếu không có dữ liệu mới hoặc đã xử lý dữ liệu này rồi, thoát
     if (!recognitionData || processedDataRef.current === JSON.stringify(recognitionData)) {
       return
     }
-    // Đánh dấu dữ liệu đã được xử lý
-    processedDataRef.current = JSON.stringify(recognitionData)
-    console.log('Xử lý dữ liệu nhận diện mới', recognitionData.status)
 
+    console.log('Xử lý dữ liệu nhận diện mới', recognitionData.status)
     isProcessingApi.current = false
 
-    // Định nghĩa hành động khôi phục có độ trễ
-    const resumeAutoCaptureLater = (delay = 2000) => {
-      if (autoCapture && captureImageRef.current && !isAutoCapturing) {
-        setTimeout(() => {
-          console.log(`Khôi phục tự động chụp sau ${delay}ms`)
-          handleToggleAutoCapture(true, false)
-        }, delay)
-      }
-    }
     switch (recognitionData?.status) {
       case 'success':
         if (recognitionData.employee) {
@@ -389,13 +426,6 @@ export default function AttendanceCapture() {
           toast.success('Điểm danh thành công', {
             description: recognitionData.message
           })
-
-          // Tạm dừng tự động chụp sau khi nhận diện thành công
-          // Tạm dừng tự động chụp sau khi nhận diện thành công
-          if (isAutoCapturing && captureImageRef.current) {
-            console.log('Tạm dừng interval sau nhận diện thành công')
-            pauseAndResume(captureImageRef.current)
-          }
         }
         break
 
@@ -435,10 +465,72 @@ export default function AttendanceCapture() {
         toast.error('Lỗi', {
           description: recognitionData.message
         })
-        resumeAutoCaptureLater(7000)
         break
     }
-  }, [recognitionData, recognizing, autoCapture, isAutoCapturing, toggleAutoCapture, pauseAndResume, attendanceMode])
+  }, [recognitionData, recognizing, autoCapture, scheduleNextCapture])
+
+  // // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
+  // useEffect(() => {
+  //   if (!recognitionData) return
+
+  //   // Định nghĩa hành động khôi phục có độ trễ
+  //   const resumeAutoCaptureLater = (delay = 2000) => {
+  //     if (autoCapture && captureImageRef.current && !isAutoCapturing) {
+  //       setTimeout(() => {
+  //         console.log(`Khôi phục tự động chụp sau ${delay}ms`)
+  //         handleToggleAutoCapture(true, false)
+  //       }, delay)
+  //     }
+  //   }
+
+  //   // Xử lý tạm dừng và khôi phục tự động chụp
+  //   if (recognitionData.status === 'success' || recognitionData.status === 'warning') {
+  //     if (isAutoCapturing && captureImageRef.current) {
+  //       console.log('Tạm dừng auto capture sau khi có kết quả API')
+  //       pauseAndResume(captureImageRef.current)
+  //     }
+  //   } else if (recognitionData.status === 'error') {
+  //     resumeAutoCaptureLater(7000) // Lỗi nên chờ lâu hơn
+  //   } else if (recognitionData.status === 'fail') {
+  //     resumeAutoCaptureLater(5000) // Không nhận diện được, thử lại sau 5s
+  //   }
+  // }, [recognitionData, autoCapture, isAutoCapturing, pauseAndResume, handleToggleAutoCapture])
+
+  // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
+  useEffect(() => {
+    if (!recognitionData) return
+
+    // Nếu đang ở chế độ tự động và có kết quả API, lên lịch cho lần chụp tiếp theo
+    if (autoCapture && captureImageRef.current) {
+      const delay = getDelayBasedOnStatus(recognitionData.status)
+
+      // Chờ một khoảng thời gian trước khi tiếp tục tự động nhận diện
+      setTimeout(() => {
+        console.log(`Tiếp tục tự động nhận diện sau ${delay}ms`)
+
+        // Bắt đầu chu kỳ chụp tiếp theo nếu vẫn đang ở chế độ tự động
+        if (autoCapture && captureImageRef.current) {
+          scheduleNextCapture(captureImageRef.current, 50) // Bắt đầu chụp ngay lần tiếp theo
+        }
+      }, delay)
+    }
+  }, [recognitionData, autoCapture])
+
+  // Hàm helper để xác định thời gian chờ dựa trên kết quả API
+  const getDelayBasedOnStatus = (status: FaceRecognitionStatusType) => {
+    switch (status) {
+      case 'success':
+        return 5000 // 5 giây để người dùng xem kết quả thành công
+      case 'warning':
+        return 5000 // 5 giây cho cảnh báo đã điểm danh
+      case 'error':
+        return 5000 // 5 giây cho lỗi
+      case 'fail':
+        return 3000 // 3 giây khi không nhận diện được
+      default:
+        return 5000
+    }
+  }
 
   return (
     <>
@@ -480,19 +572,24 @@ export default function AttendanceCapture() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className='overflow-hidden'>
             <div className='flex flex-col items-center space-y-4'>
-              <div className='relative w-full aspect-video border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800'>
-                {/* Video element */}
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className={`absolute top-0 left-0 w-full h-full object-cover ${cameraActive ? 'block' : 'hidden'}`}
-                  style={{ transform: 'scaleX(-1)' }}
-                />
-
+              {/* Sử dụng chiều cao cố định thay vì aspect-ratio */}
+              <div
+                className='relative w-full border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800'
+                style={{ height: 'calc(min(60vh, 56.25vw))' }} // 16:9 ratio but capped at 60vh
+              >
+                {/* Reset cách hiển thị của video */}
+                <div className='absolute inset-0 flex items-center justify-center'>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`max-w-full max-h-full ${cameraActive ? 'block' : 'hidden'}`}
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                </div>
                 {/* Camera waiting state */}
                 {cameraActive && !videoReady && (
                   <div className='absolute inset-0 flex items-center justify-center'>
@@ -548,7 +645,7 @@ export default function AttendanceCapture() {
                     </div>
 
                     {/* Recently recognized person overlay - briefly show */}
-                    {recognizedPerson && (
+                    {recognizedPerson && recognizedPerson.mode === FaceRecognitionStatus.Success && (
                       <div className='absolute top-4 left-4 right-4'>
                         <Alert className='bg-green-100/90 dark:bg-green-900/90 border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top duration-300'>
                           <Check className='h-4 w-4 text-green-700 dark:text-green-300' />

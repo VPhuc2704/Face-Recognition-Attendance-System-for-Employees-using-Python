@@ -1,18 +1,23 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
 interface UseAutoCaptureOptions {
-  captureInterval?: number
-  pauseAfterRecognition?: number
+  initialDelay?: number
+  subsequentDelay?: number
   minCaptureDelay?: number
 }
 
 export function useAutoCapture(options: UseAutoCaptureOptions = {}) {
-  const { captureInterval = 5000, pauseAfterRecognition = 10000, minCaptureDelay = 3000 } = options
+  const {
+    initialDelay = 50, // Giảm xuống gần như gọi ngay lập tức
+    subsequentDelay = 5000, // Tăng lên để đảm bảo toast biến mất
+    minCaptureDelay = 3000
+  } = options
 
   const [autoCapture, setAutoCapture] = useState(true)
   const [lastCaptureTime, setLastCaptureTime] = useState(0)
   const [isAutoCapturing, setIsAutoCapturing] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isFirstCapture = useRef<boolean>(true)
 
   // Kiểm tra có thể chụp không dựa trên thời gian
   const canCapture = useCallback(() => {
@@ -24,47 +29,64 @@ export function useAutoCapture(options: UseAutoCaptureOptions = {}) {
     setLastCaptureTime(Date.now())
   }, [])
 
-  // Hàm bắt đầu interval chụp tự động
-  const startAutoCapture = useCallback((captureFunction: () => void) => {
-    console.log('Starting auto capture with interval:', captureInterval)
+  // Dừng timeout hiện tại
+  const stopAutoCapture = useCallback(() => {
+    console.log('Stopping current auto capture process')
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+      setIsAutoCapturing(false)
+    }
+  }, [])
 
-    // Xóa interval cũ nếu có
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+  // Thay đổi từ setInterval thành setTimeout để có thể kiểm soát thời gian chờ giữa các lần
+  const scheduleNextCapture = useCallback((captureFunction: () => void, delay: number) => {
+    console.log(`Scheduling next capture in ${delay}ms`)
+
+    // Xóa timeout cũ nếu có
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
     }
 
-    // Tạo interval mới
-    intervalRef.current = setInterval(() => {
-      console.log('Auto capture interval triggered')
-      // Bao bọc bằng try-catch để tránh lỗi
+    // Đặt timeout mới
+    timeoutRef.current = setTimeout(() => {
+      console.log('Auto capture triggered')
+      setIsAutoCapturing(true)
+
       try {
         captureFunction()
       } catch (error) {
         console.error('Error in auto capture function:', error)
       }
-    }, captureInterval)
 
-    setIsAutoCapturing(true)
+      // Sau khi capture, reset lại firstCapture flag
+      isFirstCapture.current = false
+    }, delay)
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-        setIsAutoCapturing(false)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
       }
     }
   }, [])
 
-  // Hàm dừng chụp tự động
-  const stopAutoCapture = useCallback(() => {
-    console.log('Stopping auto capture')
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-      setIsAutoCapturing(false)
-    }
-  }, [])
+  // Bắt đầu quá trình tự động chụp
+  const startAutoCapture = useCallback(
+    (captureFunction: () => void) => {
+      // Đặt cờ lần chụp đầu tiên
+      isFirstCapture.current = true
+
+      // Xác định thời gian chờ dựa vào là lần đầu hay không
+      const delay = isFirstCapture.current ? initialDelay : subsequentDelay
+
+      console.log(`Starting auto capture with initial delay: ${delay}ms`)
+      setIsAutoCapturing(true)
+
+      return scheduleNextCapture(captureFunction, delay)
+    },
+    [initialDelay, subsequentDelay, scheduleNextCapture]
+  )
 
   // Tạm dừng và tiếp tục sau một khoảng thời gian
   const pauseAndResume = useCallback(
@@ -72,18 +94,13 @@ export function useAutoCapture(options: UseAutoCaptureOptions = {}) {
       console.log('Pausing auto capture')
       stopAutoCapture()
 
-      // Đặt lịch tạo interval mới sau pauseAfterRecognition ms
+      // Đặt lịch chụp tiếp theo sau khi có kết quả nhận diện
       if (autoCapture) {
-        console.log(`Will resume after ${pauseAfterRecognition}ms`)
-        setTimeout(() => {
-          if (autoCapture) {
-            console.log('Resuming auto capture')
-            startAutoCapture(captureFunction)
-          }
-        }, pauseAfterRecognition)
+        console.log(`Will resume after ${subsequentDelay}ms`)
+        scheduleNextCapture(captureFunction, subsequentDelay)
       }
     },
-    [autoCapture, pauseAfterRecognition, startAutoCapture, stopAutoCapture]
+    [autoCapture, subsequentDelay, scheduleNextCapture, stopAutoCapture]
   )
 
   // Bật/tắt chế độ tự động
@@ -111,6 +128,7 @@ export function useAutoCapture(options: UseAutoCaptureOptions = {}) {
     stopAutoCapture,
     pauseAndResume,
     updateLastCaptureTime,
-    canCapture
+    canCapture,
+    scheduleNextCapture
   }
 }
