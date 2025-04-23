@@ -17,6 +17,7 @@ import { Search, MoreVertical, Filter, UserPlus, Loader2 } from 'lucide-react'
 import { EmployeeType } from '@/schemas/admin.shema'
 import { useEmployeeList } from '@/hooks/useAdmin'
 import { DepartmentLabels, DepartmentType, PositionLabels, PositionType, Status, StatusLabels } from '@/constants/type'
+import { formatDate } from '@/lib/utils'
 
 export default function EmployeeList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -157,54 +158,90 @@ export default function EmployeeList() {
       </Card>
 
       {/* Dialog xem chi tiết nhân viên */}
-      {/* {selectedEmployee && (
+      {selectedEmployee && (
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className='sm:max-w-md'>
             <DialogHeader>
               <DialogTitle>Thông tin nhân viên</DialogTitle>
-              <DialogDescription>Chi tiết thông tin của nhân viên {selectedEmployee.fullName}</DialogDescription>
+              <DialogDescription>Chi tiết thông tin của nhân viên {selectedEmployee.firstName}</DialogDescription>
             </DialogHeader>
             <div className='grid gap-4 py-4'>
               <div className='flex flex-col items-center mb-4'>
                 <div className='w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 mb-2 overflow-hidden'>
-                  <img
-                    src={`https://ui-avatars.com/api/?name=${selectedEmployee.fullName.replace(' ', '+')}&background=random`}
-                    alt={selectedEmployee.fullName}
-                    className='w-full h-full object-cover'
-                  />
+                  {selectedEmployee.employee.employeeImg ? (
+                    <img
+                      src={`${import.meta.env.VITE_MEDIA_URL || ''}${selectedEmployee.employee.employeeImg}`}
+                      alt={`${selectedEmployee.firstName} ${selectedEmployee.lastName}`}
+                      className='w-full h-full object-cover'
+                    />
+                  ) : (
+                    <img
+                      src={`https://ui-avatars.com/api/?name=${selectedEmployee.firstName.replace(' ', '+')}+${selectedEmployee.lastName.replace(' ', '+')}&background=random`}
+                      alt={`${selectedEmployee.firstName} ${selectedEmployee.lastName}`}
+                      className='w-full h-full object-cover'
+                    />
+                  )}
                 </div>
-                <h3 className='font-semibold text-lg'>{selectedEmployee.fullName}</h3>
+                <h3 className='font-semibold text-lg'>
+                  {' '}
+                  {`${selectedEmployee.firstName} ${selectedEmployee.lastName}`}
+                </h3>
                 <Badge variant='outline' className='mt-1'>
-                  {selectedEmployee.position}
+                  {selectedEmployee.employee.position}
                 </Badge>
               </div>
 
               <div className='grid grid-cols-3 gap-2 text-sm'>
-                <div className='font-medium'>Tên đăng nhập:</div>
-                <div className='col-span-2'>{selectedEmployee.username}</div>
+                <div className='font-medium'>Mã nhân viên:</div>
+                <div className='col-span-2'>{selectedEmployee.employee.employee_code || 'Chưa có mã'}</div>
 
                 <div className='font-medium'>Email:</div>
                 <div className='col-span-2'>{selectedEmployee.email}</div>
 
+                <div className='font-medium'>Số điện thoại:</div>
+                <div className='col-span-2'>{selectedEmployee.employee.phone || 'Chưa cập nhật'}</div>
+
+                <div className='font-medium'>Ngày sinh:</div>
+                <div className='col-span-2'>
+                  {selectedEmployee.employee.date_of_birth
+                    ? formatDate(selectedEmployee.employee.date_of_birth)
+                    : 'Chưa cập nhật'}
+                </div>
+
                 <div className='font-medium'>Phòng ban:</div>
-                <div className='col-span-2'>{selectedEmployee.department}</div>
+                <div className='col-span-2'>
+                  {DepartmentLabels[selectedEmployee.employee.department as DepartmentType]}
+                </div>
 
                 <div className='font-medium'>Vị trí:</div>
-                <div className='col-span-2'>{selectedEmployee.position}</div>
+                <div className='col-span-2'>{PositionLabels[selectedEmployee.employee.position as PositionType]}</div>
 
-                <div className='font-medium'>Ngày đăng ký:</div>
-                <div className='col-span-2'>{selectedEmployee.registerDate}</div>
+                <div className='font-medium'>Ngày bắt đầu:</div>
+                <div className='col-span-2'>
+                  {selectedEmployee.employee.start_date
+                    ? formatDate(selectedEmployee.employee.start_date)
+                    : 'Chưa cập nhật'}
+                </div>
+
+                <div className='font-medium'>Địa chỉ:</div>
+                <div className='col-span-2'>{selectedEmployee.employee.address || 'Chưa cập nhật'}</div>
+
+                <div className='font-medium'>Trạng thái:</div>
+                <div className='col-span-2'>
+                  <Badge variant={selectedEmployee.employee.status === 'Active' ? 'default' : 'secondary'}>
+                    {StatusLabels[selectedEmployee.employee.status]}
+                  </Badge>
+                </div>
               </div>
             </div>
             <div className='flex justify-between'>
               <Button variant='outline' onClick={() => setIsViewDialogOpen(false)}>
                 Đóng
               </Button>
-              <Button>Xem lịch sử điểm danh</Button>
             </div>
           </DialogContent>
         </Dialog>
-      )} */}
+      )}
     </>
   )
 }
