@@ -9,3 +9,12 @@ export const useAttendanceHistory = () => {
     refetchOnReconnect: false
   })
 }
+
+export const useEmployeeList = () => {
+  return useQuery({
+    queryKey: ['employee-list'],
+    queryFn: adminService.getEmployeeList,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
+  })
+}
