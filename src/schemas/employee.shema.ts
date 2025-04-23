@@ -1,3 +1,4 @@
+import { AttendanceStatus } from '@/constants/type'
 import { z } from 'zod'
 
 // Schema cho dữ liệu profile từ API
@@ -57,3 +58,19 @@ export const ProfileUpdateRes = z.object({
   })
 })
 export type ProfileUpdateResType = z.infer<typeof ProfileUpdateRes>
+
+export const AttendanceRecordSchema = z.object({
+  id: z.number(),
+  date: z.string(),
+  check_in: z.string().nullable(),
+  check_out: z.string().nullable(),
+  status: z.enum([AttendanceStatus.Present, AttendanceStatus.Absent, AttendanceStatus.Late]),
+  created_at: z.string(),
+  updated_at: z.string(),
+  employeeId: z.number()
+})
+
+export type AttendanceRecordType = z.infer<typeof AttendanceRecordSchema>
+
+export const AttendanceHistoryResponse = z.array(AttendanceRecordSchema)
+export type AttendanceHistoryResponseType = z.infer<typeof AttendanceHistoryResponse>

@@ -1,5 +1,7 @@
 import api from '@/api/axios'
 import {
+  AttendanceHistoryResponse,
+  AttendanceHistoryResponseType,
   ProfileRes,
   ProfileResType,
   ProfileUpdateBodyType,
@@ -37,6 +39,14 @@ export const employeeService = {
 
     // Validate dữ liệu trả về
     const parsed = ProfileUpdateRes.parse(res.data)
+    return parsed
+  },
+
+  getHistory: async (): Promise<AttendanceHistoryResponseType> => {
+    const res = await api.get('/attendance/history')
+
+    // Xác thực dữ liệu trả về
+    const parsed = AttendanceHistoryResponse.parse(res.data)
     return parsed
   }
 }

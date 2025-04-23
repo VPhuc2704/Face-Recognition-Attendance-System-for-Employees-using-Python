@@ -23,3 +23,12 @@ export const useUpdateProfile = () => {
     }
   })
 }
+
+export const useAttendanceHistory = () => {
+  return useQuery({
+    queryKey: ['attendance-history'],
+    queryFn: employeeService.getHistory,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
+  })
+}
