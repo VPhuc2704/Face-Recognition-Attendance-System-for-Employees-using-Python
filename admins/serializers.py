@@ -14,6 +14,11 @@ class EmployeeNestedSerializer(serializers.ModelSerializer):
             'gender', 'date_of_birth', 'phone', 'address', 
             'employee_code', 'start_date', 'status', 'department', 'position', 'employeeImg'
         ]
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get("employeeImg"):
+            data['employeeImg'] = data['employeeImg'].replace('http://localhost:8000/', '')
+        return data
 
 class AdminUserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

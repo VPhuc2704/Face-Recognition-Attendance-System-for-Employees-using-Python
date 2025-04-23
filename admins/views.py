@@ -12,12 +12,20 @@ from datetime import date, datetime
 from rest_framework import viewsets
 from authentications.models import User
 from admins.serializers import AdminUserCreateSerializer
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 
 class AdminUserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    # queryset = User.objects.all()
+    # queryset = User.objects.exclude(role="admin")
     serializer_class = AdminUserCreateSerializer
     permission_classes = [IsAdminUser]
+    def get_queryset(self):
+        if self.action == 'destroy':
+            return User.objects.all()
+        return User.objects.exclude(role="admin")
+    def check_admin_role(self, user):
+        if user.role == 'admin':
+            raise PermissionDenied("Không được phép sửa hoặc xóa tài khoản admin.")
     def get_object(self):
         # Lấy user theo ID từ URL
         user_id = self.kwargs.get('pk')
@@ -28,14 +36,18 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         return user
 
     def update(self, request, *args, **kwargs):
+
         user = self.get_object()
+        self.check_admin_role(user)
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return Response(serializer.data)
+    
     def destroy(self, request, pk=None):
         try:
             user = self.get_queryset().get(pk=pk)
+            self.check_admin_role(user)
             user.delete()
             return Response(
                 {"message": "Xoá người dùng thành công."}, status=status.HTTP_204_NO_CONTENT
@@ -45,7 +57,7 @@ class AdminUserViewSet(viewsets.ModelViewSet):
                 {"error": "Người dùng không tồn tại."}, status=status.HTTP_404_NOT_FOUND
             )
 class AdminCreateAttendanceView(APIView):
-    permission_classes = [IsAdminUser] 
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
         data = request.data
@@ -65,7 +77,7 @@ class AdminCreateAttendanceView(APIView):
                 employeeId=employee,
                 date=date.today(),  # Tự lấy ngày hôm nay
                 check_in=datetime.now(),  # Gán giờ hiện tại
-                status=status_attendance,  # Không kiểm tra gì thêm
+                status=status_attendance,
                 created_at=datetime.now(),
                 updated_at=datetime.now()
             )

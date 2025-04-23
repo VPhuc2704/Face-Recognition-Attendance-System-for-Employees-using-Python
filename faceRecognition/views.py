@@ -167,6 +167,13 @@ class FaceRecognitionView(APIView):
                                     },
                                 }
                             )
+                        if attendance.status == "Vắng mặt":
+                            return JsonResponse(
+                                {
+                                    "status": "error",
+                                    "message": f"{employee.full_name()} đã bị đánh dấu vắng mặt, không thể check-in.",
+                                },
+                            )
                         if not attendance.check_in:
                             attendance.check_in = now()
                             attendance.save()
@@ -238,6 +245,13 @@ class FaceRecognitionView(APIView):
                                     "status": "error",
                                     "message": f"{employee.full_name()} chưa check-in hôm nay nên không thể check-out",
                                 }
+                            )
+                        if attendance.status == "Vắng mặt":
+                            return JsonResponse(
+                                {
+                                    "status": "error",
+                                    "message": f"{employee.full_name()} đã bị đánh dấu vắng mặt, không thể check-out.",
+                                },
                             )
                         elif not attendance.check_out:
                             attendance.check_out = now()
