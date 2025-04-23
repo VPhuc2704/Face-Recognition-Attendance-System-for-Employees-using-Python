@@ -111,9 +111,12 @@ export default function EmployeeList() {
                         <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
                         <TableCell>{employee.email}</TableCell>
                         <TableCell>
-                          <Badge variant='outline'>
-                            {DepartmentLabels[employee.employee.department as DepartmentType]}
-                          </Badge>
+                          {employee.employee.department &&
+                          DepartmentLabels[employee.employee.department as DepartmentType] ? (
+                            <Badge variant='outline'>
+                              {DepartmentLabels[employee.employee.department as DepartmentType]}
+                            </Badge>
+                          ) : null}
                         </TableCell>
                         <TableCell>{PositionLabels[employee.employee.position as PositionType]}</TableCell>
                         <TableCell>
