@@ -393,10 +393,10 @@ export default function AttendanceCapture() {
       console.log('API có thể đã gặp lỗi, reset trạng thái')
       isProcessingApi.current = false
       // THAY ĐỔI: Lên lịch chụp lại nếu đang ở chế độ tự động
-      if (autoCapture && captureImageRef.current) {
-        console.log('Lên lịch thử lại sau 3 giây do API có thể gặp lỗi')
-        scheduleNextCapture(captureImageRef.current, 3000)
-      }
+      // if (autoCapture && captureImageRef.current) {
+      //   console.log('Lên lịch thử lại sau 3 giây do API có thể gặp lỗi')
+      //   scheduleNextCapture(captureImageRef.current, 3000)
+      // }
     }
 
     // Nếu không có dữ liệu mới hoặc đã xử lý dữ liệu này rồi, thoát
@@ -467,7 +467,7 @@ export default function AttendanceCapture() {
         })
         break
     }
-  }, [recognitionData, recognizing, autoCapture, scheduleNextCapture])
+  }, [recognitionData, scheduleNextCapture])
 
   // // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
   // useEffect(() => {
@@ -522,7 +522,7 @@ export default function AttendanceCapture() {
       case 'success':
         return 5000 // 5 giây để người dùng xem kết quả thành công
       case 'warning':
-        return 5000 // 5 giây cho cảnh báo đã điểm danh
+        return 7000 // 5 giây cho cảnh báo đã điểm danh
       case 'error':
         return 5000 // 5 giây cho lỗi
       case 'fail':
