@@ -1,5 +1,6 @@
 import { adminService } from '@/services/admin.service'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { CreateEmployeeFormValues } from '@/schemas/admin.shema'
 
 export const useAttendanceHistory = () => {
   return useQuery({
@@ -21,6 +22,18 @@ export const useEmployeeList = () => {
         console.error('Lỗi khi gọi API:', error)
         throw error
       }
+    }
+  })
+}
+
+export const useCreateEmployee = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: CreateEmployeeFormValues) => adminService.createEmployee(data),
+    onSuccess: () => {
+      // Khi tạo nhân viên thành công, cập nhật lại danh sách nhân viên
+      queryClient.invalidateQueries({ queryKey: ['employee-list'] })
     }
   })
 }

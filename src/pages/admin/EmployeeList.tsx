@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useNavigate } from 'react-router-dom'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ import { DepartmentLabels, DepartmentType, PositionLabels, PositionType, Status,
 import { formatDate } from '@/lib/utils'
 
 export default function EmployeeList() {
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeType | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -41,6 +43,11 @@ export default function EmployeeList() {
   const handleViewEmployee = (employee: EmployeeType) => {
     setSelectedEmployee(employee)
     setIsViewDialogOpen(true)
+  }
+
+  // Thêm hàm để chuyển đến trang tạo nhân viên
+  const handleAddEmployee = () => {
+    navigate('/admin/employees/create')
   }
 
   return (
@@ -72,7 +79,7 @@ export default function EmployeeList() {
                 <Filter className='mr-2 h-4 w-4' />
                 Bộ lọc
               </Button>
-              <Button>
+              <Button onClick={handleAddEmployee}>
                 <UserPlus className='mr-2 h-4 w-4' />
                 Thêm nhân viên
               </Button>
