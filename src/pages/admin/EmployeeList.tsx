@@ -5,6 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -12,22 +21,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Search, MoreVertical, Filter, UserPlus, Loader2 } from 'lucide-react'
+import { Search, MoreVertical, Filter, UserPlus, Loader2, AlertTriangle } from 'lucide-react'
 import { EmployeeType } from '@/schemas/admin.shema'
-import { useEmployeeList } from '@/hooks/useAdmin'
+import { useDeleteEmployee, useEmployeeList } from '@/hooks/useAdmin'
 import { DepartmentLabels, DepartmentType, PositionLabels, PositionType, Status, StatusLabels } from '@/constants/type'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export default function EmployeeList() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeType | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeType | null>(null)
 
-  // Sử dụng hook để lấy dữ liệu
+  // Sử dụng hook để lấy dữ liệu và xóa nhân viên
   const { data: employeesData, isLoading, error } = useEmployeeList()
+  const { mutate: deleteEmployee, isPending: isDeleting } = useDeleteEmployee()
+
   // Lọc nhân viên theo từ khóa tìm kiếm
   const filteredEmployees =
     employeesData?.filter(
@@ -53,6 +67,29 @@ export default function EmployeeList() {
   // Chỉnh sửa thông tin nhân viên
   const handleEditEmployee = (employeeId: number) => {
     navigate(`/admin/employees/edit/${employeeId}`)
+  }
+
+  // Mở dialog xác nhận xóa nhân viên
+  const handleConfirmDelete = (employee: EmployeeType) => {
+    setEmployeeToDelete(employee)
+    setIsDeleteDialogOpen(true)
+  }
+
+  // Xóa nhân viên sau khi xác nhận
+  const handleDeleteEmployee = () => {
+    if (!employeeToDelete) return
+
+    deleteEmployee(employeeToDelete.id, {
+      onSuccess: () => {
+        toast.success('Xóa nhân viên thành công')
+        setIsDeleteDialogOpen(false)
+        setEmployeeToDelete(null)
+      },
+      onError: (error) => {
+        console.error('Lỗi khi xóa nhân viên:', error)
+        toast.error('Có lỗi xảy ra khi xóa nhân viên')
+      }
+    })
   }
 
   return (
@@ -154,7 +191,9 @@ export default function EmployeeList() {
                                 Chỉnh sửa
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className='text-red-500'>Xóa</DropdownMenuItem>
+                              <DropdownMenuItem className='text-red-500' onClick={() => handleConfirmDelete(employee)}>
+                                Xóa
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -255,18 +294,69 @@ export default function EmployeeList() {
               <Button variant='outline' onClick={() => setIsViewDialogOpen(false)}>
                 Đóng
               </Button>
-              <Button
-                onClick={() => {
-                  setIsViewDialogOpen(false)
-                  handleEditEmployee(selectedEmployee.id)
-                }}
-              >
-                Chỉnh sửa
-              </Button>
+              <div className='space-x-2'>
+                <Button
+                  variant='destructive'
+                  onClick={() => {
+                    setIsViewDialogOpen(false)
+                    handleConfirmDelete(selectedEmployee)
+                  }}
+                >
+                  Xóa
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsViewDialogOpen(false)
+                    handleEditEmployee(selectedEmployee.id)
+                  }}
+                >
+                  Chỉnh sửa
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Dialog xác nhận xóa nhân viên */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle className='flex items-center text-red-500 gap-2'>
+              <AlertTriangle className='h-5 w-5' />
+              Xác nhận xóa nhân viên
+            </DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa nhân viên{' '}
+              <span className='font-semibold'>
+                {employeeToDelete?.firstName} {employeeToDelete?.lastName}
+              </span>{' '}
+              không? Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn tất cả dữ liệu của nhân viên này.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Alert variant='destructive' className='mb-4'>
+            <AlertTitle className='flex items-center'>
+              <AlertTriangle className='h-4 w-4 mr-2' />
+              Cảnh báo quan trọng
+            </AlertTitle>
+            <AlertDescription className='pl-6'>
+              Việc xóa nhân viên sẽ đồng thời xóa tất cả dữ liệu liên quan như lịch sử điểm danh, thông tin cá nhân. Hãy
+              chắc chắn rằng bạn đã sao lưu dữ liệu cần thiết.
+            </AlertDescription>
+          </Alert>
+
+          <DialogFooter className='sm:justify-between'>
+            <Button variant='outline' onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+              Hủy bỏ
+            </Button>
+            <Button variant='destructive' onClick={handleDeleteEmployee} disabled={isDeleting}>
+              {isDeleting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              {isDeleting ? 'Đang xóa...' : 'Xác nhận xóa'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

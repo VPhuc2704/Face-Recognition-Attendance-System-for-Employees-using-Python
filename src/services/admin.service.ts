@@ -91,5 +91,11 @@ export const adminService = {
     // Xác thực dữ liệu trả về
     const parsed = EmployeeSchema.parse(res.data)
     return parsed
+  },
+
+  // Hàm để xóa nhân viên
+  deleteEmployee: async (id: number): Promise<{ message: string }> => {
+    const res = await api.delete(`/admin/users/${id}`)
+    return { message: 'Xóa nhân viên thành công' }
   }
 }

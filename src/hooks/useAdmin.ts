@@ -62,3 +62,16 @@ export const useUpdateEmployee = () => {
     }
   })
 }
+
+// Hook để xóa nhân viên
+export const useDeleteEmployee = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteEmployee(id),
+    onSuccess: () => {
+      // Khi xóa nhân viên thành công, cập nhật lại danh sách nhân viên
+      queryClient.invalidateQueries({ queryKey: ['employee-list'] })
+    }
+  })
+}
