@@ -45,9 +45,14 @@ export default function EmployeeList() {
     setIsViewDialogOpen(true)
   }
 
-  // Thêm hàm để chuyển đến trang tạo nhân viên
+  // Thêm nhân viên mới
   const handleAddEmployee = () => {
     navigate('/admin/employees/create')
+  }
+
+  // Chỉnh sửa thông tin nhân viên
+  const handleEditEmployee = (employeeId: number) => {
+    navigate(`/admin/employees/edit/${employeeId}`)
   }
 
   return (
@@ -145,7 +150,9 @@ export default function EmployeeList() {
                               <DropdownMenuItem onClick={() => handleViewEmployee(employee)}>
                                 Xem chi tiết
                               </DropdownMenuItem>
-                              <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEditEmployee(employee.id)}>
+                                Chỉnh sửa
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className='text-red-500'>Xóa</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -247,6 +254,14 @@ export default function EmployeeList() {
             <div className='flex justify-between'>
               <Button variant='outline' onClick={() => setIsViewDialogOpen(false)}>
                 Đóng
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsViewDialogOpen(false)
+                  handleEditEmployee(selectedEmployee.id)
+                }}
+              >
+                Chỉnh sửa
               </Button>
             </div>
           </DialogContent>

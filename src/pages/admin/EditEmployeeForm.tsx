@@ -1,29 +1,48 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Loader2, Upload } from 'lucide-react'
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
-import { CreateEmployeeFormValues, CreateEmployeeSchema } from '@/schemas/admin.shema'
-import { useCreateEmployee } from '@/hooks/useAdmin'
-import { Department, DepartmentLabels, Position, PositionLabels, Status } from '@/constants/type'
+import { UpdateEmployeeFormValues, UpdateEmployeeSchema } from '@/schemas/admin.shema'
+import { useGetEmployee, useUpdateEmployee } from '@/hooks/useAdmin'
+import {
+  Department,
+  DepartmentLabels,
+  DepartmentType,
+  Position,
+  PositionLabels,
+  PositionType,
+  Status,
+  StatusLabels
+} from '@/constants/type'
+import { formatDateForInput } from '@/lib/utils'
 
-export default function CreateEmployeeForm() {
+export default function EditEmployeeForm() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const employeeId = id ? parseInt(id) : 0
+
+  const { data: employeeData, isLoading, error } = useGetEmployee(employeeId)
+  const { mutate: updateEmployee, isPending } = useUpdateEmployee()
+
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const { mutate: createEmployee, isPending } = useCreateEmployee()
+  const [formReady, setFormReady] = useState(false)
 
   // Khởi tạo react-hook-form với resolver từ zod
-  const form = useForm<CreateEmployeeFormValues>({
-    resolver: zodResolver(CreateEmployeeSchema),
+  const form = useForm<UpdateEmployeeFormValues>({
+    resolver: zodResolver(UpdateEmployeeSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -33,14 +52,44 @@ export default function CreateEmployeeForm() {
       date_of_birth: '',
       phone: '',
       address: '',
-      department: Department.IT,
+      department: Department.HR,
       position: Position.Staff,
-      employee_code: '',
       start_date: '',
-      status: Status.Active,
-      employeeImg: null
-    }
+      status: Status.Active
+    },
+    mode: 'onChange'
   })
+
+  // Cập nhật giá trị mặc định khi có dữ liệu từ API
+  useEffect(() => {
+    if (employeeData) {
+      // Cập nhật giá trị form từ dữ liệu nhân viên
+      form.reset({
+        firstName: employeeData.firstName,
+        lastName: employeeData.lastName,
+        email: employeeData.email,
+        password: '', // Mật khẩu trống khi cập nhật
+        gender: employeeData.employee.gender || '',
+        date_of_birth: employeeData.employee.date_of_birth
+          ? formatDateForInput(employeeData.employee.date_of_birth)
+          : '',
+        phone: employeeData.employee.phone || '',
+        address: employeeData.employee.address || '',
+        department: employeeData.employee.department as DepartmentType, // Chuyển đổi từ string sang enum
+        position: employeeData.employee.position as PositionType, // Chuyển đổi từ string sang enum
+        start_date: employeeData.employee.start_date ? formatDateForInput(employeeData.employee.start_date) : '',
+        status: employeeData.employee.status
+      })
+
+      // Hiển thị ảnh preview nếu có
+      if (employeeData.employee.employeeImg) {
+        setPreviewImage(`${import.meta.env.VITE_MEDIA_URL || ''}${employeeData.employee.employeeImg}`)
+      }
+
+      // Đánh dấu form đã sẵn sàng
+      setFormReady(true)
+    }
+  }, [employeeData, form])
 
   // Xử lý khi upload ảnh
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,24 +109,73 @@ export default function CreateEmployeeForm() {
   }
 
   // Xử lý khi submit form
-  const onSubmit = (data: CreateEmployeeFormValues) => {
-    createEmployee(data, {
-      onSuccess: () => {
-        toast.success('Tạo nhân viên thành công')
-        navigate('/admin/employees') // Chuyển về trang danh sách nhân viên
-      },
-      onError: (error) => {
-        console.error('Lỗi khi tạo nhân viên:', error)
-        toast.error('Có lỗi xảy ra khi tạo nhân viên')
+  const onSubmit = (data: UpdateEmployeeFormValues) => {
+    updateEmployee(
+      { id: employeeId, data },
+      {
+        onSuccess: () => {
+          toast.success('Cập nhật nhân viên thành công')
+          navigate('/admin/employees')
+        },
+        onError: (error) => {
+          console.error('Lỗi khi cập nhật nhân viên:', error)
+          toast.error('Có lỗi xảy ra khi cập nhật nhân viên')
+        }
       }
-    })
+    )
+  }
+
+  // Hiển thị skeleton loading khi đang tải dữ liệu or form chưa sẵn sàng
+  if (isLoading || !formReady) {
+    return (
+      <div className='space-y-6'>
+        <div>
+          <Skeleton className='h-8 w-1/3 mb-2' />
+          <Skeleton className='h-4 w-2/3' />
+        </div>
+
+        <Card>
+          <CardHeader>
+            <Skeleton className='h-6 w-1/4 mb-2' />
+            <Skeleton className='h-4 w-1/2' />
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <Skeleton className='h-10 w-full' />
+              <Skeleton className='h-10 w-full' />
+            </div>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              <Skeleton className='h-10 w-full' />
+              <Skeleton className='h-10 w-full' />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Hiển thị thông báo lỗi nếu không tìm thấy nhân viên
+  if (error || !employeeData) {
+    return (
+      <Alert variant='destructive' className='mb-4'>
+        <AlertTitle>Đã xảy ra lỗi!</AlertTitle>
+        <AlertDescription>
+          Không thể tải thông tin nhân viên. Vui lòng thử lại sau hoặc liên hệ quản trị viên.
+        </AlertDescription>
+        <div className='mt-4'>
+          <Button onClick={() => navigate('/admin/employees')}>Quay lại danh sách</Button>
+        </div>
+      </Alert>
+    )
   }
 
   return (
     <>
       <div className='mb-6'>
-        <h1 className='text-2xl font-bold tracking-tight'>Thêm nhân viên mới</h1>
-        <p className='text-muted-foreground'>Tạo tài khoản và thông tin cho nhân viên mới trong hệ thống.</p>
+        <h1 className='text-2xl font-bold tracking-tight'>Cập nhật thông tin nhân viên</h1>
+        <p className='text-muted-foreground'>
+          Chỉnh sửa thông tin của nhân viên {employeeData?.firstName} {employeeData?.lastName}
+        </p>
       </div>
 
       <Form {...form}>
@@ -146,12 +244,11 @@ export default function CreateEmployeeForm() {
                   name='password'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        Mật khẩu <span className='text-red-500'>*</span>
-                      </FormLabel>
+                      <FormLabel>Mật khẩu mới</FormLabel>
                       <FormControl>
-                        <Input type='password' placeholder='Nhập mật khẩu' {...field} />
+                        <Input type='password' placeholder='Để trống nếu không thay đổi' {...field} />
                       </FormControl>
+                      <FormDescription>Chỉ nhập mật khẩu nếu muốn thay đổi</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -165,7 +262,7 @@ export default function CreateEmployeeForm() {
                   render={({ field: { value, onChange, ...fieldProps } }) => (
                     <FormItem>
                       <FormLabel>Giới tính</FormLabel>
-                      <Select onValueChange={onChange} defaultValue={value || undefined}>
+                      <Select onValueChange={onChange} defaultValue={value || undefined} value={value || undefined}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Chọn giới tính' />
@@ -252,7 +349,7 @@ export default function CreateEmployeeForm() {
                       <FormLabel>
                         Phòng ban <span className='text-red-500'>*</span>
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Chọn phòng ban' />
@@ -279,7 +376,7 @@ export default function CreateEmployeeForm() {
                       <FormLabel>
                         Vị trí <span className='text-red-500'>*</span>
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Chọn vị trí' />
@@ -299,21 +396,41 @@ export default function CreateEmployeeForm() {
                 />
               </div>
 
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-1'>
-                <FormField
-                  control={form.control}
-                  name='start_date'
-                  render={({ field: { value, onChange, ...fieldProps } }) => (
-                    <FormItem>
-                      <FormLabel>Ngày bắt đầu</FormLabel>
-                      <FormControl>
-                        <Input type='date' value={value || ''} onChange={onChange} {...fieldProps} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name='start_date'
+                render={({ field: { value, onChange, ...fieldProps } }) => (
+                  <FormItem>
+                    <FormLabel>Ngày bắt đầu</FormLabel>
+                    <FormControl>
+                      <Input type='date' value={value || ''} onChange={onChange} {...fieldProps} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='status'
+                render={({ field }) => (
+                  <FormItem className='flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm'>
+                    <div className='space-y-0.5'>
+                      <FormLabel>Trạng thái làm việc</FormLabel>
+                      <FormDescription>
+                        {field.value === Status.Active ? StatusLabels.Active : StatusLabels.Inactive}
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value === Status.Active}
+                        onCheckedChange={(checked) => field.onChange(checked ? Status.Active : Status.Inactive)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -321,7 +438,7 @@ export default function CreateEmployeeForm() {
           <Card>
             <CardHeader>
               <CardTitle>Hình ảnh nhân viên</CardTitle>
-              <CardDescription>Tải lên hình ảnh nhận diện của nhân viên</CardDescription>
+              <CardDescription>Cập nhật hình ảnh nhận diện của nhân viên</CardDescription>
             </CardHeader>
 
             <CardContent>
@@ -338,7 +455,7 @@ export default function CreateEmployeeForm() {
                     )}
                   </div>
                   <div className='flex-1 space-y-2'>
-                    <FormLabel htmlFor='employeeImg'>Tải lên hình ảnh nhân viên</FormLabel>
+                    <FormLabel htmlFor='employeeImg'>Tải lên hình ảnh mới</FormLabel>
                     <Input id='employeeImg' type='file' accept='image/*' onChange={handleImageChange} />
                     <p className='text-xs text-muted-foreground'>
                       Hình ảnh khuôn mặt rõ ràng của nhân viên để sử dụng cho hệ thống nhận diện khuôn mặt
@@ -354,7 +471,7 @@ export default function CreateEmployeeForm() {
               </Button>
               <Button type='submit' disabled={isPending}>
                 {isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                Tạo nhân viên
+                Lưu thay đổi
               </Button>
             </CardFooter>
           </Card>

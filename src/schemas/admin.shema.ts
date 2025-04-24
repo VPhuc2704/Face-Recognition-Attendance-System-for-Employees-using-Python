@@ -86,6 +86,39 @@ export const CreateEmployeeSchema = z.object({
 
 export type CreateEmployeeFormValues = z.infer<typeof CreateEmployeeSchema>
 
+// Schema cho form cập nhật nhân viên
+export const UpdateEmployeeSchema = z.object({
+  firstName: z.string().min(1, 'Họ không được để trống'),
+  lastName: z.string().min(1, 'Tên không được để trống'),
+  email: z.string().email('Email không hợp lệ'),
+
+  // Mật khẩu có thể trống hoặc ít nhất 6 ký tự
+  password: z.string().refine((val) => !val || val.length >= 6, {
+    message: 'Mật khẩu phải có ít nhất 6 ký tự'
+  }),
+
+  // Thông tin cá nhân (không bắt buộc)
+  gender: z.string().nullable().optional(),
+  date_of_birth: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+
+  // Thông tin công việc
+  department: z.enum(DepartmentValues, {
+    errorMap: () => ({ message: 'Vui lòng chọn phòng ban' })
+  }),
+  position: z.enum(PositionValues, {
+    errorMap: () => ({ message: 'Vui lòng chọn vị trí' })
+  }),
+  start_date: z.string().nullable().optional(),
+  status: z.enum(StatusValues).optional(),
+
+  // Ảnh nhân viên
+  employeeImg: z.instanceof(File).nullable().optional()
+})
+
+export type UpdateEmployeeFormValues = z.infer<typeof UpdateEmployeeSchema>
+
 // Response schema
 export const CreateEmployeeResponseSchema = z.object({
   id: z.number(),
