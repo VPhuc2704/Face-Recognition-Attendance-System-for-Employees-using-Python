@@ -13,8 +13,14 @@ export const useAttendanceHistory = () => {
 export const useEmployeeList = () => {
   return useQuery({
     queryKey: ['employee-list'],
-    queryFn: adminService.getEmployeeList,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false
+    queryFn: async () => {
+      try {
+        const result = await adminService.getEmployeeList()
+        return result
+      } catch (error) {
+        console.error('Lỗi khi gọi API:', error)
+        throw error
+      }
+    }
   })
 }
