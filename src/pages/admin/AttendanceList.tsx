@@ -161,7 +161,7 @@ export default function AttendanceList() {
                 ) : filteredAttendance.length > 0 ? (
                   filteredAttendance.map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell className='font-medium'>{record.employee.employeeId}</TableCell>
+                      <TableCell className='font-medium'>{record.employee.employee_code}</TableCell>
                       <TableCell>{record.employee.employeeName}</TableCell>
                       <TableCell>
                         {DepartmentLabels[record.employee.department as keyof typeof DepartmentLabels] ||
