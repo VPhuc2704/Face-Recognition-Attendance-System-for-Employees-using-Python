@@ -167,7 +167,7 @@ class FaceRecognitionView(APIView):
                                     },
                                 }
                             )
-                        if attendance.status == "Vắng mặt":
+                        if attendance.status == "Absent":
                             return JsonResponse(
                                 {
                                     "status": "error",
@@ -246,7 +246,7 @@ class FaceRecognitionView(APIView):
                                     "message": f"{employee.full_name()} chưa check-in hôm nay nên không thể check-out",
                                 }
                             )
-                        if attendance.status == "Vắng mặt":
+                        if attendance.status == "Absent":
                             return JsonResponse(
                                 {
                                     "status": "error",
