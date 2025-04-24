@@ -17,7 +17,7 @@ class EmployeeNestedSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if data.get("employeeImg"):
-            data['employeeImg'] = data['employeeImg'].replace('http://localhost:8000/', '')
+            data['employeeImg'] = data['employeeImg'].replace('http://localhost:8000', '')
         return data
 
 class AdminUserCreateSerializer(serializers.ModelSerializer):
@@ -59,6 +59,10 @@ class AdminUserCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
+
+        if "status" not in validated_data or not validated_data.get("status"):
+            validated_data["status"] = "Active"
+
         # Tạo user
         user = User.objects.create_user(
             email=validated_data.get('email'),
@@ -88,6 +92,8 @@ class AdminUserCreateSerializer(serializers.ModelSerializer):
         return user
     def update(self, instance, validated_data):
         # Cập nhật thông tin User
+        if 'employee_code' in validated_data:
+            validated_data.pop('employee_code')
         instance.firstName = validated_data.get('firstName', instance.firstName)
         instance.lastName = validated_data.get('lastName', instance.lastName)
         if "email" in validated_data:
@@ -108,7 +114,6 @@ class AdminUserCreateSerializer(serializers.ModelSerializer):
             instance.employee.date_of_birth = validated_data.get('date_of_birth', instance.employee.date_of_birth)
             instance.employee.phone = validated_data.get('phone', instance.employee.phone)
             instance.employee.address = validated_data.get('address', instance.employee.address)
-            instance.employee.employee_code = validated_data.get('employee_code', instance.employee.employee_code)
             instance.employee.start_date = validated_data.get('start_date', instance.employee.start_date)
             instance.employee.status = validated_data.get('status', instance.employee.status)
             instance.employee.employeeImg = validated_data.get('employeeImg', instance.employee.employeeImg)
