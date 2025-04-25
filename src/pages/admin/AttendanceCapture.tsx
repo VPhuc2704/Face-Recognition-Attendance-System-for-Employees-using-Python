@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import {
   ActionStatus,
   ActionStatusType,
+  AttendanceStatus,
+  AttendanceStatusLabels,
   DepartmentLabels,
   DepartmentType,
   FaceRecognitionStatus,
@@ -433,7 +435,7 @@ export default function AttendanceCapture() {
               recognitionData.attendance?.check_in ||
               recognitionData.attendance?.check_out ||
               new Date().toLocaleString(),
-            mode: recognitionData.status || attendanceMode // lưu mode để hiển thị đúng
+            attendanceStatus: recognitionData.attendance?.status
           })
 
           toast.success('Điểm danh thành công', {
@@ -460,7 +462,7 @@ export default function AttendanceCapture() {
               recognitionData.attendance?.check_in ||
               recognitionData.attendance?.check_out ||
               new Date().toLocaleString(),
-            mode: recognitionData.status || attendanceMode
+            attendanceStatus: recognitionData.attendance?.status
           })
         }
         break
@@ -523,6 +525,7 @@ export default function AttendanceCapture() {
         return 5000
     }
   }
+  console.log(recognizedPerson)
 
   return (
     <>
@@ -637,7 +640,7 @@ export default function AttendanceCapture() {
                     </div>
 
                     {/* Recently recognized person overlay - briefly show */}
-                    {recognizedPerson && recognizedPerson.mode === FaceRecognitionStatus.Success && (
+                    {recognizedPerson && recognizedPerson.status === FaceRecognitionStatus.Success && (
                       <div className='absolute top-4 left-4 right-4'>
                         <Alert className='bg-green-100/90 dark:bg-green-900/90 border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top duration-300'>
                           <Check className='h-4 w-4 text-green-700 dark:text-green-300' />
@@ -724,22 +727,25 @@ export default function AttendanceCapture() {
             {recognizedPerson ? (
               <div className='space-y-4'>
                 <div className='flex flex-col items-center'>
-                  <div className='w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-2'>
-                    <Check className='h-8 w-8 text-green-600 dark:text-green-400' />
+                  {/* Hiển thị biểu tượng khác nhau tùy theo trạng thái điểm danh */}
+                  <div
+                    className={cn(
+                      'w-20 h-20 rounded-full flex items-center justify-center mb-2',
+                      recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                        ? 'bg-yellow-100 dark:bg-yellow-900'
+                        : 'bg-green-100 dark:bg-green-900'
+                    )}
+                  >
+                    <Check
+                      className={cn(
+                        'h-8 w-8',
+                        recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                          ? 'text-yellow-600 dark:text-yellow-400'
+                          : 'text-green-600 dark:text-green-400'
+                      )}
+                    />
                   </div>
                   <h3 className='text-xl font-semibold'>{recognizedPerson.name}</h3>
-                  {/* Hiển thị trạng thái là check-in hay check-out thành công */}
-                  <Badge
-                    className='mt-1'
-                    variant={recognizedPerson.mode === ActionStatus.CheckIn ? 'default' : 'secondary'}
-                  >
-                    {recognizedPerson.mode === 'check_in' ? 'Check-in' : 'Check-out'}
-                  </Badge>
-                  {recognizedPerson.department && (
-                    <Badge className='mt-1'>
-                      {DepartmentLabels[recognizedPerson.department as DepartmentType] || recognizedPerson.department}
-                    </Badge>
-                  )}
                 </div>
 
                 <div className='space-y-2'>
@@ -761,11 +767,44 @@ export default function AttendanceCapture() {
                     <span className='text-muted-foreground'>Điểm danh lúc:</span>
                     <span className='font-medium'>{recognizedPerson.checkInTime}</span>
                   </div>
+
+                  {/* Thêm trạng thái điểm danh */}
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-muted-foreground'>Trạng thái:</span>
+                    <span
+                      className={cn(
+                        'font-medium',
+                        recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                          ? 'text-yellow-600'
+                          : 'text-green-600'
+                      )}
+                    >
+                      {recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                        ? AttendanceStatusLabels.Late
+                        : AttendanceStatusLabels.Present}
+                    </span>
+                  </div>
                 </div>
 
-                <Button className='w-full' variant='outline' disabled={true}>
-                  <Check className='mr-2 h-4 w-4' />
-                  Đã điểm danh thành công
+                <Button
+                  className='w-full'
+                  variant={recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'outline' : 'outline'}
+                  disabled={true}
+                  style={{
+                    borderColor:
+                      recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'var(--yellow-500)' : undefined,
+                    color: recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'var(--yellow-600)' : undefined
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'text-yellow-600' : 'text-green-600'
+                    )}
+                  />
+                  {recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                    ? 'Đã điểm danh - Đi muộn'
+                    : 'Đã điểm danh thành công'}
                 </Button>
               </div>
             ) : (
