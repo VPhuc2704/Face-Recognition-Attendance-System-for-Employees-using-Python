@@ -59,6 +59,7 @@ export default function AttendanceCapture() {
   const isAutoCapturingRef = useRef(isAutoCapturing)
   const faceDetectedRef = useRef(faceDetected)
   const isFaceSufficientRef = useRef(isFaceSufficient)
+  const delayedCaptureTimeoutsRef = useRef<NodeJS.Timeout[]>([])
 
   const { mutate: checkIn, isPending: recognizing, data: recognitionData } = useFaceRecognition()
 
@@ -258,32 +259,6 @@ export default function AttendanceCapture() {
     scheduleNextCapture
   ])
 
-  // Hàm xử lý và hiển thị lỗi từ backend
-  const handleBackendError = useCallback((error: any) => {
-    let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại sau'
-
-    // Kiểm tra các trường hợp lỗi cụ thể từ backend
-    if (error?.message) {
-      if (error.message.includes('Không phát hiện khuôn mặt')) {
-        errorMessage = 'Không phát hiện được khuôn mặt trong hình ảnh'
-      } else if (error.message.includes('Không có dữ liệu khuôn mặt')) {
-        errorMessage = 'Chưa có dữ liệu khuôn mặt trong hệ thống'
-      } else if (error.message.includes('check-in hôm nay')) {
-        errorMessage = 'Nhân viên đã check-in hôm nay'
-      } else if (error.message.includes('check out hôm nay')) {
-        errorMessage = 'Nhân viên đã check-out hôm nay'
-      } else if (error.message.includes('chưa check-in')) {
-        errorMessage = 'Nhân viên phải check-in trước khi check-out'
-      } else {
-        errorMessage = error.message
-      }
-    }
-
-    toast.error('Điểm danh thất bại', {
-      description: errorMessage
-    })
-  }, [])
-
   // Gán captureImage vào ref sau khi nó đã được tạo
   useEffect(() => {
     captureImageRef.current = captureImage
@@ -333,7 +308,26 @@ export default function AttendanceCapture() {
   // Handle camera stop
   const handleStopCamera = () => {
     toggleAutoCapture(false)
+
+    // Xóa tất cả các timeout đang chờ
+    clearAllDelayedCaptures()
+
+    // Reset các state và ref liên quan
+    isProcessingApi.current = false
+    processedDataRef.current = null
+    setRecognizedPerson(null)
+
+    // Reset các ref quan trọng
+    videoReadyRef.current = false // QUAN TRỌNG: Đánh dấu video đã không còn sẵn sàng
+    faceDetectedRef.current = false // Reset trạng thái nhận diện khuôn mặt
+    isFaceSufficientRef.current = false // Reset trạng thái khuôn mặt đủ lớn
+    autoCaptuteRef.current = false // Reset trạng thái tự động chụp
+    isAutoCapturingRef.current = false // Reset trạng thái đang tự động chụp
+
     stopCamera()
+    console.log(videoReadyRef.current)
+    console.log(captureImageRef.current)
+    console.log(autoCapture)
   }
 
   // Manual capture trigger
@@ -351,21 +345,23 @@ export default function AttendanceCapture() {
 
   // Sửa hàm handleToggleAutoCapture với useCallback
   const handleToggleAutoCapture = useCallback(
-    (enabled: boolean, showNotification: boolean = true) => {
+    (enabled: boolean) => {
       if (captureImageRef.current) {
         toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
-
-        if (showNotification) {
-          toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
-            description: enabled
-              ? 'Hệ thống sẽ tự động nhận diện khuôn mặt ngay lập tức, sau mỗi lần nhận diện sẽ đợi toast biến mất'
-              : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
-          })
-        }
       }
     },
     [toggleAutoCapture] // Chỉ phụ thuộc vào toggleAutoCapture
   )
+
+  // Thêm hàm để hủy tất cả các timeout đang chờ
+  const clearAllDelayedCaptures = useCallback(() => {
+    console.log(`Clearing ${delayedCaptureTimeoutsRef.current.length} pending capture timeouts`)
+    delayedCaptureTimeoutsRef.current.forEach((timeoutId) => {
+      clearTimeout(timeoutId)
+    })
+    delayedCaptureTimeoutsRef.current = []
+  }, [])
+
   // Cập nhật ref khi state thay đổi
   useEffect(() => {
     autoCaptuteRef.current = autoCapture
@@ -453,12 +449,9 @@ export default function AttendanceCapture() {
         break
 
       case 'fail':
-        // Chỉ hiển thị thông báo khi chụp thủ công để tránh quá nhiều thông báo
-        if (!isAutoCapturing) {
-          toast.error('Không nhận diện được', {
-            description: recognitionData.message
-          })
-        }
+        toast.error('Không nhận diện được', {
+          description: recognitionData.message
+        })
         break
 
       case 'error':
@@ -469,33 +462,6 @@ export default function AttendanceCapture() {
     }
   }, [recognitionData, scheduleNextCapture])
 
-  // // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
-  // useEffect(() => {
-  //   if (!recognitionData) return
-
-  //   // Định nghĩa hành động khôi phục có độ trễ
-  //   const resumeAutoCaptureLater = (delay = 2000) => {
-  //     if (autoCapture && captureImageRef.current && !isAutoCapturing) {
-  //       setTimeout(() => {
-  //         console.log(`Khôi phục tự động chụp sau ${delay}ms`)
-  //         handleToggleAutoCapture(true, false)
-  //       }, delay)
-  //     }
-  //   }
-
-  //   // Xử lý tạm dừng và khôi phục tự động chụp
-  //   if (recognitionData.status === 'success' || recognitionData.status === 'warning') {
-  //     if (isAutoCapturing && captureImageRef.current) {
-  //       console.log('Tạm dừng auto capture sau khi có kết quả API')
-  //       pauseAndResume(captureImageRef.current)
-  //     }
-  //   } else if (recognitionData.status === 'error') {
-  //     resumeAutoCaptureLater(7000) // Lỗi nên chờ lâu hơn
-  //   } else if (recognitionData.status === 'fail') {
-  //     resumeAutoCaptureLater(5000) // Không nhận diện được, thử lại sau 5s
-  //   }
-  // }, [recognitionData, autoCapture, isAutoCapturing, pauseAndResume, handleToggleAutoCapture])
-
   // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
   useEffect(() => {
     if (!recognitionData) return
@@ -505,7 +471,7 @@ export default function AttendanceCapture() {
       const delay = getDelayBasedOnStatus(recognitionData.status)
 
       // Chờ một khoảng thời gian trước khi tiếp tục tự động nhận diện
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         console.log(`Tiếp tục tự động nhận diện sau ${delay}ms`)
 
         // Bắt đầu chu kỳ chụp tiếp theo nếu vẫn đang ở chế độ tự động
@@ -513,6 +479,15 @@ export default function AttendanceCapture() {
           scheduleNextCapture(captureImageRef.current, 50) // Bắt đầu chụp ngay lần tiếp theo
         }
       }, delay)
+
+      // Lưu timeout ID để có thể hủy khi cần
+      delayedCaptureTimeoutsRef.current.push(timeoutId)
+      // Cleanup function
+      return () => {
+        clearTimeout(timeoutId)
+        // Xóa timeout này khỏi danh sách
+        delayedCaptureTimeoutsRef.current = delayedCaptureTimeoutsRef.current.filter((id) => id !== timeoutId)
+      }
     }
   }, [recognitionData, autoCapture])
 
@@ -522,7 +497,7 @@ export default function AttendanceCapture() {
       case 'success':
         return 5000 // 5 giây để người dùng xem kết quả thành công
       case 'warning':
-        return 7000 // 5 giây cho cảnh báo đã điểm danh
+        return 5000 // 5 giây cho cảnh báo đã điểm danh
       case 'error':
         return 5000 // 5 giây cho lỗi
       case 'fail':
@@ -553,7 +528,7 @@ export default function AttendanceCapture() {
                   id='attendance-mode'
                   checked={attendanceMode === 'check_out'}
                   onCheckedChange={(checked) => setAttendanceMode(checked ? 'check_out' : 'check_in')}
-                  disabled={!cameraActive || !videoReady || recognizing}
+                  // disabled={!cameraActive || !videoReady || recognizing}
                 />
                 <Label htmlFor='attendance-mode'>
                   {attendanceMode === 'check_in' ? 'Chế độ Check-in' : 'Chế độ Check-out'}
