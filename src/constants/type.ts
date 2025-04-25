@@ -152,7 +152,7 @@ export const AttendanceStatusValues = [
   AttendanceStatus.Late
 ] as const
 export const AttendanceStatusLabels: Record<AttendanceStatusType, string> = {
-  [AttendanceStatus.Present]: 'Có mặt',
+  [AttendanceStatus.Present]: 'Đúng giờ',
   [AttendanceStatus.Absent]: 'Vắng mặt',
   [AttendanceStatus.Late]: 'Đi muộn'
 }

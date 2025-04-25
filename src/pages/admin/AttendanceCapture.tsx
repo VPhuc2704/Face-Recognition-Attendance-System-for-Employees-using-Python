@@ -525,8 +525,6 @@ export default function AttendanceCapture() {
         return 5000
     }
   }
-  console.log(recognizedPerson)
-
   return (
     <>
       <div className='mb-6'>
