@@ -20,7 +20,22 @@ export const employeeService = {
   },
 
   updateProfile: async (body: ProfileUpdateBodyType): Promise<ProfileUpdateResType> => {
-    const res = await api.put('/employees/profile', body)
+    const formData = new FormData()
+
+    // Thêm các trường dữ liệu thông thường
+    if (body.phone !== null) formData.append('phone', body.phone)
+    if (body.address !== null) formData.append('address', body.address)
+    if (body.gender !== null) formData.append('gender', body.gender)
+    if (body.date_of_birth !== null) formData.append('date_of_birth', body.date_of_birth)
+
+    // Thêm file hình ảnh nếu có
+    if (body.employeeImg) formData.append('employeeImg', body.employeeImg)
+
+    const res = await api.put('/employees/profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 
     // Validate dữ liệu trả về
     const parsed = ProfileUpdateRes.parse(res.data)
