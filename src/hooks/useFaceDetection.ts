@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import * as faceapi from 'face-api.js'
+import * as faceapi from '@vladmandic/face-api'
 
 interface UseFaceDetectionOptions {
   minFaceSize?: number
@@ -80,6 +80,8 @@ export function useFaceDetection(options: UseFaceDetectionOptions = {}) {
     faceDetected,
     faceSize,
     startDetection,
+    setFaceDetected,
+    setFaceSize,
     isFaceSufficient: faceSize >= minFaceSize
   }
 }
