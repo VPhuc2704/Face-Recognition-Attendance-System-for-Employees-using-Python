@@ -18,7 +18,7 @@ export const ProfileRes = z.object({
   employee_code: z.string(),
   start_date: z.string().nullable(),
   status: z.string(),
-  employeeImg: z.string()
+  employeeImg: z.string().nullable()
 })
 
 export type ProfileResType = z.infer<typeof ProfileRes>
