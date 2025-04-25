@@ -39,9 +39,10 @@ export default function AttendanceCapture() {
   // Custom hooks
   const { videoRef, cameraActive, videoReady, videoReadyRef, cameraError, startCamera, stopCamera } = useCamera()
 
-  const { modelsLoaded, faceDetected, faceSize, startDetection, isFaceSufficient } = useFaceDetection({
-    minFaceSize: MIN_FACE_SIZE
-  })
+  const { modelsLoaded, faceDetected, faceSize, startDetection, isFaceSufficient, setFaceDetected, setFaceSize } =
+    useFaceDetection({
+      minFaceSize: MIN_FACE_SIZE
+    })
 
   const {
     autoCapture,
@@ -60,6 +61,7 @@ export default function AttendanceCapture() {
   const faceDetectedRef = useRef(faceDetected)
   const isFaceSufficientRef = useRef(isFaceSufficient)
   const delayedCaptureTimeoutsRef = useRef<NodeJS.Timeout[]>([])
+  const defaultAutoCaptureRef = useRef(true) // Giá trị mặc định là true
 
   const { mutate: checkIn, isPending: recognizing, data: recognitionData } = useFaceRecognition()
 
@@ -280,6 +282,14 @@ export default function AttendanceCapture() {
     isProcessingApi.current = false
     lastApiRequestTime.current = 0
 
+    // Reset face detection state
+    setFaceDetected(false)
+    faceDetectedRef.current = false
+    setFaceSize(0)
+
+    // Lưu lại trạng thái tự động chụp hiện tại trước khi tắt nó
+    const shouldResumeAutoCapture = defaultAutoCaptureRef.current
+
     // Đảm bảo tắt auto-capture hiện tại nếu có
     if (isAutoCapturing) {
       toggleAutoCapture(false)
@@ -294,10 +304,11 @@ export default function AttendanceCapture() {
         // Kiểm tra trạng thái thực tế của video qua ref
         console.log('Checking video status after delay:', {
           stateReady: videoReady,
-          refReady: videoReadyRef.current
+          refReady: videoReadyRef.current,
+          shouldResumeAutoCapture
         })
 
-        if (videoReadyRef.current && captureImageRef.current && autoCapture) {
+        if (videoReadyRef.current && captureImageRef.current && shouldResumeAutoCapture) {
           console.log('Khởi tạo tự động chụp sau khi chắc chắn video sẵn sàng')
           toggleAutoCapture(true, captureImageRef.current)
         }
@@ -346,6 +357,9 @@ export default function AttendanceCapture() {
   // Sửa hàm handleToggleAutoCapture với useCallback
   const handleToggleAutoCapture = useCallback(
     (enabled: boolean) => {
+      // Lưu trạng thái mới vào ref
+      defaultAutoCaptureRef.current = enabled
+
       if (captureImageRef.current) {
         toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
       }
@@ -361,6 +375,14 @@ export default function AttendanceCapture() {
     })
     delayedCaptureTimeoutsRef.current = []
   }, [])
+
+  useEffect(() => {
+    if (cameraActive && videoReady && videoRef.current) {
+      // console.log('Reinitializing face detection after camera restart')
+      const cleanup = startDetection(videoRef.current)
+      return cleanup
+    }
+  }, [cameraActive, videoReady, videoRef, startDetection])
 
   // Cập nhật ref khi state thay đổi
   useEffect(() => {
@@ -388,11 +410,6 @@ export default function AttendanceCapture() {
     if (recognizing === false && isProcessingApi.current) {
       console.log('API có thể đã gặp lỗi, reset trạng thái')
       isProcessingApi.current = false
-      // THAY ĐỔI: Lên lịch chụp lại nếu đang ở chế độ tự động
-      // if (autoCapture && captureImageRef.current) {
-      //   console.log('Lên lịch thử lại sau 3 giây do API có thể gặp lỗi')
-      //   scheduleNextCapture(captureImageRef.current, 3000)
-      // }
     }
 
     // Nếu không có dữ liệu mới hoặc đã xử lý dữ liệu này rồi, thoát
