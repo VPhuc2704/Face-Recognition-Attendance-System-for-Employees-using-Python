@@ -80,6 +80,8 @@ export function useFaceDetection(options: UseFaceDetectionOptions = {}) {
     faceDetected,
     faceSize,
     startDetection,
+    setFaceDetected,
+    setFaceSize,
     isFaceSufficient: faceSize >= minFaceSize
   }
 }

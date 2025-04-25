@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import {
   ActionStatus,
   ActionStatusType,
+  AttendanceStatus,
+  AttendanceStatusLabels,
   DepartmentLabels,
   DepartmentType,
   FaceRecognitionStatus,
@@ -39,9 +41,10 @@ export default function AttendanceCapture() {
   // Custom hooks
   const { videoRef, cameraActive, videoReady, videoReadyRef, cameraError, startCamera, stopCamera } = useCamera()
 
-  const { modelsLoaded, faceDetected, faceSize, startDetection, isFaceSufficient } = useFaceDetection({
-    minFaceSize: MIN_FACE_SIZE
-  })
+  const { modelsLoaded, faceDetected, faceSize, startDetection, isFaceSufficient, setFaceDetected, setFaceSize } =
+    useFaceDetection({
+      minFaceSize: MIN_FACE_SIZE
+    })
 
   const {
     autoCapture,
@@ -59,6 +62,8 @@ export default function AttendanceCapture() {
   const isAutoCapturingRef = useRef(isAutoCapturing)
   const faceDetectedRef = useRef(faceDetected)
   const isFaceSufficientRef = useRef(isFaceSufficient)
+  const delayedCaptureTimeoutsRef = useRef<NodeJS.Timeout[]>([])
+  const defaultAutoCaptureRef = useRef(true) // Giá trị mặc định là true
 
   const { mutate: checkIn, isPending: recognizing, data: recognitionData } = useFaceRecognition()
 
@@ -258,32 +263,6 @@ export default function AttendanceCapture() {
     scheduleNextCapture
   ])
 
-  // Hàm xử lý và hiển thị lỗi từ backend
-  const handleBackendError = useCallback((error: any) => {
-    let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại sau'
-
-    // Kiểm tra các trường hợp lỗi cụ thể từ backend
-    if (error?.message) {
-      if (error.message.includes('Không phát hiện khuôn mặt')) {
-        errorMessage = 'Không phát hiện được khuôn mặt trong hình ảnh'
-      } else if (error.message.includes('Không có dữ liệu khuôn mặt')) {
-        errorMessage = 'Chưa có dữ liệu khuôn mặt trong hệ thống'
-      } else if (error.message.includes('check-in hôm nay')) {
-        errorMessage = 'Nhân viên đã check-in hôm nay'
-      } else if (error.message.includes('check out hôm nay')) {
-        errorMessage = 'Nhân viên đã check-out hôm nay'
-      } else if (error.message.includes('chưa check-in')) {
-        errorMessage = 'Nhân viên phải check-in trước khi check-out'
-      } else {
-        errorMessage = error.message
-      }
-    }
-
-    toast.error('Điểm danh thất bại', {
-      description: errorMessage
-    })
-  }, [])
-
   // Gán captureImage vào ref sau khi nó đã được tạo
   useEffect(() => {
     captureImageRef.current = captureImage
@@ -305,6 +284,14 @@ export default function AttendanceCapture() {
     isProcessingApi.current = false
     lastApiRequestTime.current = 0
 
+    // Reset face detection state
+    setFaceDetected(false)
+    faceDetectedRef.current = false
+    setFaceSize(0)
+
+    // Lưu lại trạng thái tự động chụp hiện tại trước khi tắt nó
+    const shouldResumeAutoCapture = defaultAutoCaptureRef.current
+
     // Đảm bảo tắt auto-capture hiện tại nếu có
     if (isAutoCapturing) {
       toggleAutoCapture(false)
@@ -319,10 +306,11 @@ export default function AttendanceCapture() {
         // Kiểm tra trạng thái thực tế của video qua ref
         console.log('Checking video status after delay:', {
           stateReady: videoReady,
-          refReady: videoReadyRef.current
+          refReady: videoReadyRef.current,
+          shouldResumeAutoCapture
         })
 
-        if (videoReadyRef.current && captureImageRef.current && autoCapture) {
+        if (videoReadyRef.current && captureImageRef.current && shouldResumeAutoCapture) {
           console.log('Khởi tạo tự động chụp sau khi chắc chắn video sẵn sàng')
           toggleAutoCapture(true, captureImageRef.current)
         }
@@ -333,7 +321,26 @@ export default function AttendanceCapture() {
   // Handle camera stop
   const handleStopCamera = () => {
     toggleAutoCapture(false)
+
+    // Xóa tất cả các timeout đang chờ
+    clearAllDelayedCaptures()
+
+    // Reset các state và ref liên quan
+    isProcessingApi.current = false
+    processedDataRef.current = null
+    setRecognizedPerson(null)
+
+    // Reset các ref quan trọng
+    videoReadyRef.current = false // QUAN TRỌNG: Đánh dấu video đã không còn sẵn sàng
+    faceDetectedRef.current = false // Reset trạng thái nhận diện khuôn mặt
+    isFaceSufficientRef.current = false // Reset trạng thái khuôn mặt đủ lớn
+    autoCaptuteRef.current = false // Reset trạng thái tự động chụp
+    isAutoCapturingRef.current = false // Reset trạng thái đang tự động chụp
+
     stopCamera()
+    console.log(videoReadyRef.current)
+    console.log(captureImageRef.current)
+    console.log(autoCapture)
   }
 
   // Manual capture trigger
@@ -351,21 +358,34 @@ export default function AttendanceCapture() {
 
   // Sửa hàm handleToggleAutoCapture với useCallback
   const handleToggleAutoCapture = useCallback(
-    (enabled: boolean, showNotification: boolean = true) => {
+    (enabled: boolean) => {
+      // Lưu trạng thái mới vào ref
+      defaultAutoCaptureRef.current = enabled
+
       if (captureImageRef.current) {
         toggleAutoCapture(enabled, enabled ? captureImageRef.current : undefined)
-
-        if (showNotification) {
-          toast.info(enabled ? 'Tự động nhận diện đã bật' : 'Tự động nhận diện đã tắt', {
-            description: enabled
-              ? 'Hệ thống sẽ tự động nhận diện khuôn mặt ngay lập tức, sau mỗi lần nhận diện sẽ đợi toast biến mất'
-              : 'Bạn có thể nhấn nút "Nhận diện" để kiểm tra thủ công'
-          })
-        }
       }
     },
     [toggleAutoCapture] // Chỉ phụ thuộc vào toggleAutoCapture
   )
+
+  // Thêm hàm để hủy tất cả các timeout đang chờ
+  const clearAllDelayedCaptures = useCallback(() => {
+    console.log(`Clearing ${delayedCaptureTimeoutsRef.current.length} pending capture timeouts`)
+    delayedCaptureTimeoutsRef.current.forEach((timeoutId) => {
+      clearTimeout(timeoutId)
+    })
+    delayedCaptureTimeoutsRef.current = []
+  }, [])
+
+  useEffect(() => {
+    if (cameraActive && videoReady && videoRef.current) {
+      // console.log('Reinitializing face detection after camera restart')
+      const cleanup = startDetection(videoRef.current)
+      return cleanup
+    }
+  }, [cameraActive, videoReady, videoRef, startDetection])
+
   // Cập nhật ref khi state thay đổi
   useEffect(() => {
     autoCaptuteRef.current = autoCapture
@@ -392,11 +412,6 @@ export default function AttendanceCapture() {
     if (recognizing === false && isProcessingApi.current) {
       console.log('API có thể đã gặp lỗi, reset trạng thái')
       isProcessingApi.current = false
-      // THAY ĐỔI: Lên lịch chụp lại nếu đang ở chế độ tự động
-      if (autoCapture && captureImageRef.current) {
-        console.log('Lên lịch thử lại sau 3 giây do API có thể gặp lỗi')
-        scheduleNextCapture(captureImageRef.current, 3000)
-      }
     }
 
     // Nếu không có dữ liệu mới hoặc đã xử lý dữ liệu này rồi, thoát
@@ -420,7 +435,7 @@ export default function AttendanceCapture() {
               recognitionData.attendance?.check_in ||
               recognitionData.attendance?.check_out ||
               new Date().toLocaleString(),
-            mode: recognitionData.status || attendanceMode // lưu mode để hiển thị đúng
+            attendanceStatus: recognitionData.attendance?.status
           })
 
           toast.success('Điểm danh thành công', {
@@ -447,18 +462,15 @@ export default function AttendanceCapture() {
               recognitionData.attendance?.check_in ||
               recognitionData.attendance?.check_out ||
               new Date().toLocaleString(),
-            mode: recognitionData.status || attendanceMode
+            attendanceStatus: recognitionData.attendance?.status
           })
         }
         break
 
       case 'fail':
-        // Chỉ hiển thị thông báo khi chụp thủ công để tránh quá nhiều thông báo
-        if (!isAutoCapturing) {
-          toast.error('Không nhận diện được', {
-            description: recognitionData.message
-          })
-        }
+        toast.error('Không nhận diện được', {
+          description: recognitionData.message
+        })
         break
 
       case 'error':
@@ -467,34 +479,7 @@ export default function AttendanceCapture() {
         })
         break
     }
-  }, [recognitionData, recognizing, autoCapture, scheduleNextCapture])
-
-  // // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
-  // useEffect(() => {
-  //   if (!recognitionData) return
-
-  //   // Định nghĩa hành động khôi phục có độ trễ
-  //   const resumeAutoCaptureLater = (delay = 2000) => {
-  //     if (autoCapture && captureImageRef.current && !isAutoCapturing) {
-  //       setTimeout(() => {
-  //         console.log(`Khôi phục tự động chụp sau ${delay}ms`)
-  //         handleToggleAutoCapture(true, false)
-  //       }, delay)
-  //     }
-  //   }
-
-  //   // Xử lý tạm dừng và khôi phục tự động chụp
-  //   if (recognitionData.status === 'success' || recognitionData.status === 'warning') {
-  //     if (isAutoCapturing && captureImageRef.current) {
-  //       console.log('Tạm dừng auto capture sau khi có kết quả API')
-  //       pauseAndResume(captureImageRef.current)
-  //     }
-  //   } else if (recognitionData.status === 'error') {
-  //     resumeAutoCaptureLater(7000) // Lỗi nên chờ lâu hơn
-  //   } else if (recognitionData.status === 'fail') {
-  //     resumeAutoCaptureLater(5000) // Không nhận diện được, thử lại sau 5s
-  //   }
-  // }, [recognitionData, autoCapture, isAutoCapturing, pauseAndResume, handleToggleAutoCapture])
+  }, [recognitionData, scheduleNextCapture])
 
   // Tạo useEffect riêng cho việc xử lý auto capture sau khi nhận diện
   useEffect(() => {
@@ -505,7 +490,7 @@ export default function AttendanceCapture() {
       const delay = getDelayBasedOnStatus(recognitionData.status)
 
       // Chờ một khoảng thời gian trước khi tiếp tục tự động nhận diện
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         console.log(`Tiếp tục tự động nhận diện sau ${delay}ms`)
 
         // Bắt đầu chu kỳ chụp tiếp theo nếu vẫn đang ở chế độ tự động
@@ -513,6 +498,15 @@ export default function AttendanceCapture() {
           scheduleNextCapture(captureImageRef.current, 50) // Bắt đầu chụp ngay lần tiếp theo
         }
       }, delay)
+
+      // Lưu timeout ID để có thể hủy khi cần
+      delayedCaptureTimeoutsRef.current.push(timeoutId)
+      // Cleanup function
+      return () => {
+        clearTimeout(timeoutId)
+        // Xóa timeout này khỏi danh sách
+        delayedCaptureTimeoutsRef.current = delayedCaptureTimeoutsRef.current.filter((id) => id !== timeoutId)
+      }
     }
   }, [recognitionData, autoCapture])
 
@@ -531,6 +525,7 @@ export default function AttendanceCapture() {
         return 5000
     }
   }
+  console.log(recognizedPerson)
 
   return (
     <>
@@ -553,7 +548,7 @@ export default function AttendanceCapture() {
                   id='attendance-mode'
                   checked={attendanceMode === 'check_out'}
                   onCheckedChange={(checked) => setAttendanceMode(checked ? 'check_out' : 'check_in')}
-                  disabled={!cameraActive || !videoReady || recognizing}
+                  // disabled={!cameraActive || !videoReady || recognizing}
                 />
                 <Label htmlFor='attendance-mode'>
                   {attendanceMode === 'check_in' ? 'Chế độ Check-in' : 'Chế độ Check-out'}
@@ -645,7 +640,7 @@ export default function AttendanceCapture() {
                     </div>
 
                     {/* Recently recognized person overlay - briefly show */}
-                    {recognizedPerson && recognizedPerson.mode === FaceRecognitionStatus.Success && (
+                    {recognizedPerson && recognizedPerson.status === FaceRecognitionStatus.Success && (
                       <div className='absolute top-4 left-4 right-4'>
                         <Alert className='bg-green-100/90 dark:bg-green-900/90 border-green-200 dark:border-green-800 animate-in fade-in slide-in-from-top duration-300'>
                           <Check className='h-4 w-4 text-green-700 dark:text-green-300' />
@@ -732,22 +727,25 @@ export default function AttendanceCapture() {
             {recognizedPerson ? (
               <div className='space-y-4'>
                 <div className='flex flex-col items-center'>
-                  <div className='w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-2'>
-                    <Check className='h-8 w-8 text-green-600 dark:text-green-400' />
+                  {/* Hiển thị biểu tượng khác nhau tùy theo trạng thái điểm danh */}
+                  <div
+                    className={cn(
+                      'w-20 h-20 rounded-full flex items-center justify-center mb-2',
+                      recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                        ? 'bg-yellow-100 dark:bg-yellow-900'
+                        : 'bg-green-100 dark:bg-green-900'
+                    )}
+                  >
+                    <Check
+                      className={cn(
+                        'h-8 w-8',
+                        recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                          ? 'text-yellow-600 dark:text-yellow-400'
+                          : 'text-green-600 dark:text-green-400'
+                      )}
+                    />
                   </div>
                   <h3 className='text-xl font-semibold'>{recognizedPerson.name}</h3>
-                  {/* Hiển thị trạng thái là check-in hay check-out thành công */}
-                  <Badge
-                    className='mt-1'
-                    variant={recognizedPerson.mode === ActionStatus.CheckIn ? 'default' : 'secondary'}
-                  >
-                    {recognizedPerson.mode === 'check_in' ? 'Check-in' : 'Check-out'}
-                  </Badge>
-                  {recognizedPerson.department && (
-                    <Badge className='mt-1'>
-                      {DepartmentLabels[recognizedPerson.department as DepartmentType] || recognizedPerson.department}
-                    </Badge>
-                  )}
                 </div>
 
                 <div className='space-y-2'>
@@ -769,11 +767,44 @@ export default function AttendanceCapture() {
                     <span className='text-muted-foreground'>Điểm danh lúc:</span>
                     <span className='font-medium'>{recognizedPerson.checkInTime}</span>
                   </div>
+
+                  {/* Thêm trạng thái điểm danh */}
+                  <div className='flex justify-between text-sm'>
+                    <span className='text-muted-foreground'>Trạng thái:</span>
+                    <span
+                      className={cn(
+                        'font-medium',
+                        recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                          ? 'text-yellow-600'
+                          : 'text-green-600'
+                      )}
+                    >
+                      {recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                        ? AttendanceStatusLabels.Late
+                        : AttendanceStatusLabels.Present}
+                    </span>
+                  </div>
                 </div>
 
-                <Button className='w-full' variant='outline' disabled={true}>
-                  <Check className='mr-2 h-4 w-4' />
-                  Đã điểm danh thành công
+                <Button
+                  className='w-full'
+                  variant={recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'outline' : 'outline'}
+                  disabled={true}
+                  style={{
+                    borderColor:
+                      recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'var(--yellow-500)' : undefined,
+                    color: recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'var(--yellow-600)' : undefined
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'text-yellow-600' : 'text-green-600'
+                    )}
+                  />
+                  {recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                    ? 'Đã điểm danh - Đi muộn'
+                    : 'Đã điểm danh thành công'}
                 </Button>
               </div>
             ) : (

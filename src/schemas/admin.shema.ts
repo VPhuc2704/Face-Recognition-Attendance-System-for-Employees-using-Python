@@ -1,8 +1,9 @@
 import { AttendanceStatus, Department, DepartmentValues, PositionValues, Status, StatusValues } from '@/constants/type'
+
 import { z } from 'zod'
 
 export const EmployeeAttendanceSchema = z.object({
-  employeeId: z.number(),
+  employee_code: z.string(),
   employeeName: z.string(),
   department: z.enum([Department.IT, Department.HR, Department.Accounting, Department.Marketing, Department.Sales])
 })
