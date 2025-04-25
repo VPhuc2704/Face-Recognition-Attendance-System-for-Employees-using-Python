@@ -52,3 +52,28 @@ export const formatDateTime = (dateTimeStr: string | null | undefined) => {
     return dateTimeStr
   }
 }
+
+// Hàm chuyển đổi date string (dạng DD/MM/YYYY) thành định dạng YYYY-MM-DD cho input date
+export const formatDateForInput = (dateString: string) => {
+  try {
+    if (!dateString) return ''
+
+    // Nếu đã ở định dạng YYYY-MM-DD
+    if (dateString.includes('-') && dateString.split('-').length === 3) {
+      return dateString
+    }
+
+    // Chuyển từ DD/MM/YYYY sang YYYY-MM-DD
+    const parts = dateString.split('/')
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+    }
+
+    // Chuyển từ định dạng ISO string
+    const date = new Date(dateString)
+    return date.toISOString().split('T')[0]
+  } catch (e) {
+    console.error('Lỗi chuyển đổi định dạng ngày:', e)
+    return ''
+  }
+}

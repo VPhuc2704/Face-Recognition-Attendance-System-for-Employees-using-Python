@@ -20,6 +20,8 @@ import { Settings } from 'lucide-react'
 import EmployeeHome from './pages/employee/EmployeeHome'
 import Profile from './pages/employee/Profile'
 import Attendance from './pages/employee/Attendance'
+import CreateEmployeeForm from './pages/admin/CreateEmployeeForm'
+import EditEmployeeForm from './pages/admin/EditEmployeeForm'
 
 // Create a client
 const queryClient = new QueryClient()
@@ -47,6 +49,8 @@ function App() {
               >
                 <Route index element={<AdminHome />} />
                 <Route path='employees' element={<EmployeeList />} />
+                <Route path='employees/create' element={<CreateEmployeeForm />} />
+                <Route path='employees/edit/:id' element={<EditEmployeeForm />} />
                 <Route path='attendance-capture' element={<AttendanceCapture />} />
                 <Route path='attendance-list' element={<AttendanceList />} />
                 <Route path='reports' element={<Reports />} />
