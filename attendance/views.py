@@ -14,16 +14,7 @@ class AttendanceHistoryView(APIView):
     def get(self, request):
         user = request.user
         today = date.today()
-        current_time = now().time() 
-        if current_time >= time(10, 00):  # So sánh với 10:00 sáng
-            all_employees = Employee.objects.all()
-            for employee in all_employees:
-                if not Attendance.objects.filter(employeeId=employee, date=today).exists():
-                    Attendance.objects.create(
-                        employeeId=employee,
-                        date=today,
-                        status="Absent",
-                    )
+       
         if user.is_authenticated:
             if user.is_superuser:
                 attendances = Attendance.objects.all().order_by('-date')
