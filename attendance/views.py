@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time
 from django.shortcuts import render
 from django.utils.timezone import now 
 from rest_framework.views import APIView
@@ -74,7 +74,32 @@ class ExportAttendanceExcel(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        attendances = Attendance.objects.all().order_by('-date')
+        param_date = request.query_params.get('date')
+        from_date = request.query_params.get('fromDate')
+        to_date = request.query_params.get('toDate')
+        try:
+            if param_date:
+                list_date = [
+                    datetime.strptime(dates.strip(), '%d/%m/%Y').date()
+                    for dates in param_date.split(',')
+                ]
+                attendances = Attendance.objects.filter(date__in=list_date).order_by('-date')
+            elif from_date and to_date:
+                from_date = datetime.strptime(from_date.strip(), '%d/%m/%Y').date()
+                to_date = datetime.strptime(to_date.strip(), '%d/%m/%Y').date()
+                attendances = Attendance.objects.filter(date__range=(from_date, to_date)).order_by('-date')
+            elif from_date:
+                from_date = datetime.strptime(from_date.strip(), '%d/%m/%Y').date()
+                attendances = Attendance.objects.filter(date__gte=from_date).order_by('-date')
+            elif to_date:
+                to_date = datetime.strptime(to_date.strip(), '%d/%m/%Y').date()
+                attendances = Attendance.objects.filter(date__lte=to_date).order_by('-date')
+            else:
+                attendances = Attendance.objects.all().order_by('-date')
+        except ValueError:
+            return Response({
+                "error": "Sai định dạng ngày. Định dạng hợp lệ: DD/MM/YYYY hoặc danh sách cách nhau bởi dấu phẩy (,)."
+            })
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
         worksheet.title = 'Attendance Report'
