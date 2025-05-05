@@ -85,7 +85,6 @@ export default function Profile() {
         setSelectedFile(null)
       },
       onError: (error: any) => {
-        console.error('Lỗi khi cập nhật profile:', error)
         toast.error('Đã có lỗi xảy ra', {
           description: 'Không thể cập nhật thông tin cá nhân. Vui lòng thử lại.'
         })
@@ -271,7 +270,7 @@ export default function Profile() {
                           </FormItem>
                         )}
                       />
-                      <FormField
+                      {/* <FormField
                         control={form.control}
                         name='date_of_birth'
                         render={({ field }) => (
@@ -314,7 +313,22 @@ export default function Profile() {
                             <FormMessage />
                           </FormItem>
                         )}
+                      /> */}
+
+                      <FormField
+                        control={form.control}
+                        name='date_of_birth'
+                        render={({ field: { value, onChange, ...fieldProps } }) => (
+                          <FormItem>
+                            <FormLabel>Ngày sinh</FormLabel>
+                            <FormControl>
+                              <Input type='date' value={value || ''} onChange={onChange} {...fieldProps} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
+
                       <FormField
                         control={form.control}
                         name='phone'
