@@ -12,9 +12,28 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: (data: LoginBodyType & { expectedRole?: string }) => {
-      // Chỉ gửi thông tin đăng nhập cơ bản đến API
-      const { email, password } = data
-      return authService.login({ email, password })
+      try {
+        // Chỉ gửi thông tin đăng nhập cơ bản đến API
+        const { email, password } = data
+        return authService.login({ email, password })
+      } catch (error: any) {
+        // Xử lý các mã lỗi cụ thể từ API
+        if (error.response) {
+          const status = error.response.status
+          const responseData = error.response.data
+          if (status === 401) {
+            throw new Error('Email hoặc mật khẩu không chính xác')
+          } else if (status === 404) {
+            throw new Error('Không tìm thấy tài khoản với email này')
+          } else if (status === 403) {
+            throw new Error('Tài khoản của bạn đã bị khóa hoặc chưa được kích hoạt')
+          } else if (responseData && responseData.message) {
+            throw new Error(responseData.message)
+          }
+        }
+        // Lỗi mặc định nếu không xác định được lỗi cụ thể
+        throw new Error('Đã có lỗi xảy ra khi đăng nhập')
+      }
     },
     onSuccess: (data, variables) => {
       // Kiểm tra vai trò trả về từ API có khớp với vai trò mong đợi hay không

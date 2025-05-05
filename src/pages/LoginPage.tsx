@@ -23,6 +23,7 @@ export default function LoginPage() {
   const location = useLocation()
   const registrationSuccess = location.state?.registrationSuccess
   const message = location.state?.message
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -43,6 +44,7 @@ export default function LoginPage() {
   })
 
   const onSubmit = async (data: LoginBodyType) => {
+    setLoginError(null)
     try {
       const loginData = {
         ...data,
@@ -50,10 +52,18 @@ export default function LoginPage() {
       }
       await login.mutateAsync(loginData)
     } catch (error: any) {
+      // Hiển thị lỗi từ API hoặc kiểm tra vai trò
+      const errorMessage = error.message || 'Vui lòng kiểm tra thông tin đăng nhập và thử lại'
+      // Lưu lỗi vào state để hiển thị
+      setLoginError(errorMessage)
       // Xử lý lỗi
       toast.error('Đăng nhập thất bại', {
-        description: error.message || 'Vui lòng kiểm tra thông tin đăng nhập và thử lại'
+        description: errorMessage
       })
+      // Nếu là lỗi email/mật khẩu không đúng, focus vào trường mật khẩu
+      if (errorMessage.includes('Email hoặc mật khẩu không chính xác')) {
+        form.setFocus('password')
+      }
     }
   }
 
@@ -70,12 +80,25 @@ export default function LoginPage() {
               <AlertDescription className='text-green-800'>{message}</AlertDescription>
             </Alert>
           )}
-          <Tabs defaultValue='employee' onValueChange={(value) => setActiveTab(value as 'employee' | 'admin')}>
+
+          {/* Hiển thị thông báo lỗi đăng nhập */}
+          {loginError && (
+            <Alert variant='destructive' className='mb-4'>
+              <AlertDescription>{loginError}</AlertDescription>
+            </Alert>
+          )}
+          <Tabs
+            defaultValue='employee'
+            onValueChange={(value) => {
+              setLoginError(null) // Xóa lỗi khi chuyển tab
+              setActiveTab(value as 'employee' | 'admin')
+            }}
+          >
+            {' '}
             <TabsList className='grid w-full grid-cols-2 mb-6'>
               <TabsTrigger value='employee'>Nhân viên</TabsTrigger>
               <TabsTrigger value='admin'>Quản trị viên</TabsTrigger>
             </TabsList>
-
             <TabsContent value='employee'>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
@@ -126,7 +149,6 @@ export default function LoginPage() {
                 </p>
               </div>
             </TabsContent>
-
             <TabsContent value='admin'>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
