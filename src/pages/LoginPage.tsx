@@ -46,21 +46,13 @@ export default function LoginPage() {
     try {
       const loginData = {
         ...data,
-        expectRole: activeTab === 'admin' ? Role.Admin : Role.Employee
+        expectedRole: activeTab === 'admin' ? Role.Admin : Role.Employee
       }
-      const res = await login.mutateAsync(loginData)
-      // Kiểm tra vai trò trước khi xác thực
-      const isAdmin = res.role === Role.Admin
-      if ((activeTab === 'admin' && !isAdmin) || (activeTab === 'employee' && isAdmin)) {
-        toast.error('Lỗi đăng nhập', {
-          description: 'Bạn không có quyền đăng nhập với vai trò này. Vui lòng chọn đúng loại tài khoản.'
-        })
-        return // Không tiếp tục xử lý đăng nhập
-      }
-    } catch (error) {
+      await login.mutateAsync(loginData)
+    } catch (error: any) {
       // Xử lý lỗi
       toast.error('Đăng nhập thất bại', {
-        description: 'Vui lòng kiểm tra thông tin đăng nhập và thử lại'
+        description: error.message || 'Vui lòng kiểm tra thông tin đăng nhập và thử lại'
       })
     }
   }

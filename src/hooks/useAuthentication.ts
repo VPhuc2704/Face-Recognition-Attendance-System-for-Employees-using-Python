@@ -1,6 +1,6 @@
 import { AuthEventType, Role } from '@/constants/type'
 import { useAuth } from '@/contexts/auth'
-import { RegisterBodyType } from '@/schemas/auth.schema'
+import { LoginBodyType, RegisterBodyType } from '@/schemas/auth.schema'
 import { authService } from '@/services/auth.service'
 import { authEvents } from '@/utils/authEvent'
 import { useMutation } from '@tanstack/react-query'
@@ -11,9 +11,19 @@ export const useLogin = () => {
   const navigate = useNavigate()
 
   return useMutation({
-    mutationFn: authService.login,
-    onSuccess: (data) => {
-      // Cập nhật auth context
+    mutationFn: (data: LoginBodyType & { expectedRole?: string }) => {
+      // Chỉ gửi thông tin đăng nhập cơ bản đến API
+      const { email, password } = data
+      return authService.login({ email, password })
+    },
+    onSuccess: (data, variables) => {
+      // Kiểm tra vai trò trả về từ API có khớp với vai trò mong đợi hay không
+      const { expectedRole } = variables
+      if (expectedRole && data.role !== expectedRole) {
+        throw new Error(
+          `Vai trò không phù hợp. Bạn đang cố đăng nhập vào trang ${expectedRole === Role.Admin ? 'quản trị' : 'nhân viên'}.`
+        )
+      }
       setAuthData(data)
 
       navigate(data.role === Role.Admin ? '/admin' : '/employee', { replace: true })
@@ -21,6 +31,7 @@ export const useLogin = () => {
     onError: (error) => {
       console.error('Login error:', error)
       // Có thể hiển thị thông báo lỗi tại đây
+      throw error
     }
   })
 }
