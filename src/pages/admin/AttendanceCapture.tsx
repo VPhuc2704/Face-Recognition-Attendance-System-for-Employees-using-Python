@@ -435,7 +435,8 @@ export default function AttendanceCapture() {
               recognitionData.attendance?.check_in ||
               recognitionData.attendance?.check_out ||
               new Date().toLocaleString(),
-            attendanceStatus: recognitionData.attendance?.status
+            attendanceStatus: recognitionData.attendance?.status,
+            faceRecognitionstatus: recognitionData.status
           })
 
           toast.success('Điểm danh thành công', {
@@ -462,7 +463,8 @@ export default function AttendanceCapture() {
               recognitionData.attendance?.check_in ||
               recognitionData.attendance?.check_out ||
               new Date().toLocaleString(),
-            attendanceStatus: recognitionData.attendance?.status
+            attendanceStatus: recognitionData.attendance?.status,
+            faceRecognitionstatus: recognitionData.status
           })
         }
         break
@@ -729,7 +731,7 @@ export default function AttendanceCapture() {
                   <div
                     className={cn(
                       'w-20 h-20 rounded-full flex items-center justify-center mb-2',
-                      recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                      recognizedPerson.faceRecognitionstatus === FaceRecognitionStatus.Warning
                         ? 'bg-yellow-100 dark:bg-yellow-900'
                         : 'bg-green-100 dark:bg-green-900'
                     )}
@@ -737,7 +739,7 @@ export default function AttendanceCapture() {
                     <Check
                       className={cn(
                         'h-8 w-8',
-                        recognizedPerson.attendanceStatus === AttendanceStatus.Late
+                        recognizedPerson.faceRecognitionstatus === FaceRecognitionStatus.Warning
                           ? 'text-yellow-600 dark:text-yellow-400'
                           : 'text-green-600 dark:text-green-400'
                       )}
@@ -797,7 +799,9 @@ export default function AttendanceCapture() {
                   <Check
                     className={cn(
                       'mr-2 h-4 w-4',
-                      recognizedPerson.attendanceStatus === AttendanceStatus.Late ? 'text-yellow-600' : 'text-green-600'
+                      recognizedPerson.faceRecognitionstatus === FaceRecognitionStatus.Warning
+                        ? 'text-yellow-600'
+                        : 'text-green-600'
                     )}
                   />
                   {recognizedPerson.attendanceStatus === AttendanceStatus.Late
