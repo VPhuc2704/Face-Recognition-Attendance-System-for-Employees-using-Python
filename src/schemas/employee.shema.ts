@@ -54,7 +54,7 @@ export const ProfileUpdateRes = z.object({
     employee_code: z.string(),
     start_date: z.string().nullable(),
     status: z.string(),
-    employeeImg: z.string()
+    employeeImg: z.string().nullable()
   })
 })
 export type ProfileUpdateResType = z.infer<typeof ProfileUpdateRes>
