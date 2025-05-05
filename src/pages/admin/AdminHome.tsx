@@ -8,7 +8,7 @@ import { Users, CalendarClock, UserCheck, Clock, AlertCircle, ChevronRight, Came
 import { useAttendanceHistory, useEmployeeList } from '@/hooks/useAdmin'
 import { useState, useEffect, useMemo } from 'react'
 import { formatDate, formatAttendanceTime } from '@/lib/utils'
-import { AttendanceStatus, AttendanceStatusLabels } from '@/constants/type'
+import { AttendanceStatus, AttendanceStatusLabels, DepartmentLabels } from '@/constants/type'
 import { AttendanceHistoryResponseType } from '@/schemas/admin.shema'
 
 export default function AdminHome() {
@@ -145,7 +145,7 @@ export default function AdminHome() {
                       <TableCell className='font-medium'>
                         <div className='flex items-center'>{record.employee.employeeName}</div>
                       </TableCell>
-                      <TableCell>{record.employee.department}</TableCell>
+                      <TableCell>{DepartmentLabels[record.employee.department]}</TableCell>
                       <TableCell>{formatDate(record.date)}</TableCell>
                       <TableCell>{formatAttendanceTime(record.check_in)}</TableCell>
                       <TableCell>
