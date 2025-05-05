@@ -1,6 +1,13 @@
 import { adminService } from '@/services/admin.service'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CreateEmployeeFormValues, UpdateEmployeeFormValues } from '@/schemas/admin.shema'
+import {
+  AttendanceHistoryResponseType,
+  CreateEmployeeFormValues,
+  EmployeeListResponseType,
+  UpdateEmployeeFormValues
+} from '@/schemas/admin.shema'
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns'
+import { AttendanceStatus } from '@/constants/type'
 
 export const useAttendanceHistory = () => {
   return useQuery({
@@ -21,6 +28,140 @@ export const useAttendanceHistory = () => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false
   })
+}
+
+// Hook để lấy dữ liệu thống kê báo cáo theo thời gian
+export const useAttendanceReport = (timeRange: string) => {
+  const { data: attendances, isLoading, error } = useAttendanceHistory()
+  const { data: employees } = useEmployeeList()
+
+  // Trả về các dữ liệu đã được xử lý cho biểu đồ
+  return {
+    data: {
+      summary: attendances ? generateSummaryData(attendances, timeRange) : null,
+      weeklyData: attendances ? generateWeeklyData(attendances) : null,
+      statusDistribution: attendances ? generateStatusDistributionData(attendances) : null,
+      departmentData: attendances ? generateDepartmentData(attendances, employees) : null
+    },
+    isLoading,
+    error
+  }
+}
+
+// Hàm tạo dữ liệu tổng quan
+const generateSummaryData = (attendances: AttendanceHistoryResponseType, timeRange: string) => {
+  const today = new Date()
+  let filteredData = attendances
+
+  // Lọc dữ liệu theo thời gian được chọn
+  if (timeRange === 'daily') {
+    filteredData = attendances.filter((record) => record.date === format(today, 'yyyy-MM-dd'))
+  } else if (timeRange === 'weekly') {
+    const startDate = startOfWeek(today, { weekStartsOn: 1 }) // Tuần bắt đầu từ thứ 2
+    const endDate = endOfWeek(today, { weekStartsOn: 1 })
+    filteredData = attendances.filter((record) => {
+      const recordDate = parseISO(record.date)
+      return recordDate >= startDate && recordDate <= endDate
+    })
+  } else if (timeRange === 'monthly') {
+    filteredData = attendances.filter((record) => record.date.substring(0, 7) === format(today, 'yyyy-MM'))
+  }
+
+  const total = filteredData.length
+  const onTime = filteredData.filter((record) => record.status === AttendanceStatus.Present).length
+  const late = filteredData.filter((record) => record.status === AttendanceStatus.Late).length
+  const absent = filteredData.filter((record) => record.status === AttendanceStatus.Absent).length
+
+  return {
+    total,
+    onTime,
+    late,
+    absent
+  }
+}
+
+// Hàm tạo dữ liệu cho biểu đồ cột theo tuần
+const generateWeeklyData = (attendances: AttendanceHistoryResponseType) => {
+  const today = new Date()
+  const startDate = startOfWeek(today, { weekStartsOn: 1 }) // Bắt đầu từ thứ 2
+  const endDate = endOfWeek(today, { weekStartsOn: 1 })
+  const daysInWeek = eachDayOfInterval({ start: startDate, end: endDate })
+
+  const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN']
+
+  return daysInWeek.map((day, index) => {
+    const formattedDay = format(day, 'yyyy-MM-dd')
+    const dayRecords = attendances.filter((record) => record.date === formattedDay)
+
+    return {
+      name: dayLabels[index],
+      onTime: dayRecords.filter((record) => record.status === AttendanceStatus.Present).length,
+      late: dayRecords.filter((record) => record.status === AttendanceStatus.Late).length,
+      absent: dayRecords.filter((record) => record.status === AttendanceStatus.Absent).length
+    }
+  })
+}
+
+// Hàm tạo dữ liệu cho biểu đồ tròn
+const generateStatusDistributionData = (attendances: AttendanceHistoryResponseType) => {
+  const today = new Date()
+  const startDate = startOfWeek(today, { weekStartsOn: 1 })
+  const endDate = endOfWeek(today, { weekStartsOn: 1 })
+
+  // Lọc dữ liệu của tuần hiện tại
+  const weeklyRecords = attendances.filter((record) => {
+    const recordDate = parseISO(record.date)
+    return recordDate >= startDate && recordDate <= endDate
+  })
+
+  const onTime = weeklyRecords.filter((record) => record.status === AttendanceStatus.Present).length
+  const late = weeklyRecords.filter((record) => record.status === AttendanceStatus.Late).length
+  const absent = weeklyRecords.filter((record) => record.status === AttendanceStatus.Absent).length
+
+  return [
+    { name: 'Đúng giờ', value: onTime, color: '#22c55e' },
+    { name: 'Đi muộn', value: late, color: '#eab308' },
+    { name: 'Vắng mặt', value: absent, color: '#ef4444' }
+  ]
+}
+
+// Hàm tạo dữ liệu cho biểu đồ phân bố theo phòng ban
+const generateDepartmentData = (
+  attendances: AttendanceHistoryResponseType,
+  employees: EmployeeListResponseType | undefined
+) => {
+  if (!employees) return []
+
+  // Tổng hợp nhân viên theo phòng ban
+  const departmentMap = new Map()
+
+  employees.forEach((emp) => {
+    const department = emp.employee.department
+    if (!departmentMap.has(department)) {
+      departmentMap.set(department, [])
+    }
+    departmentMap.get(department).push(emp.employee.employee_code)
+  })
+
+  // Chuyển map thành mảng dữ liệu cho biểu đồ
+  const result = []
+
+  for (const [dept, empIds] of departmentMap.entries()) {
+    // Lọc các bản ghi điểm danh thuộc phòng ban này
+    const deptRecords = attendances.filter((record) => {
+      // Kiểm tra employee_code có thuộc nhóm nhân viên của phòng ban này không
+      return empIds.includes(record.employee.employee_code)
+    })
+
+    result.push({
+      name: dept,
+      onTime: deptRecords.filter((record) => record.status === AttendanceStatus.Present).length,
+      late: deptRecords.filter((record) => record.status === AttendanceStatus.Late).length,
+      absent: deptRecords.filter((record) => record.status === AttendanceStatus.Absent).length
+    })
+  }
+
+  return result
 }
 
 export const useEmployeeList = () => {
