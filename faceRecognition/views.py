@@ -80,7 +80,7 @@ class FaceRecognitionView(APIView):
             )  # Lấy đặc trưng khuôn mặt
 
             recognized_id = None
-            max_attempts = 15  # Giảm số lần thử để tăng tốc độ
+            max_attempts = 5  # Giảm số lần thử để tăng tốc độ
             attempt = 0
 
             while attempt < max_attempts and not recognized_id:
