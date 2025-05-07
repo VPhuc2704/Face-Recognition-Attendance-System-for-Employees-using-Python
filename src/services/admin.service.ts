@@ -21,6 +21,34 @@ export const adminService = {
     return parsed
   },
 
+  // Hàm xuất dữ liệu điểm danh sang Excel
+  exportAttendanceExcel: async (params: { date?: string; fromDate?: string; toDate?: string }) => {
+    const queryParams = new URLSearchParams()
+    if (params.date) queryParams.append('date', params.date)
+    if (params.fromDate) queryParams.append('fromDate', params.fromDate)
+    if (params.toDate) queryParams.append('toDate', params.toDate)
+
+    const queryString = queryParams.toString()
+    const url = `/attendance/export/excel${queryString ? '?' + queryString : ''}`
+
+    const response = await api.get(url, { responseType: 'blob' })
+
+    // Tạo URL từ blob và tạo link download
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = 'attendance_report.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(downloadUrl)
+
+    return true
+  },
+
   // Thêm hàm mới để lấy danh sách user
   getEmployeeList: async (): Promise<EmployeeListResponseType> => {
     const res = await api.get('/admin/users')
