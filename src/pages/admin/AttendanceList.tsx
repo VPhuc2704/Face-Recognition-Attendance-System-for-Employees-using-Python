@@ -9,11 +9,12 @@ import { Calendar } from '@/components/ui/calendar'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { Search, Calendar as CalendarIcon, Download, Filter, Loader2 } from 'lucide-react'
+import { Search, Calendar as CalendarIcon, Filter, Loader2 } from 'lucide-react'
 import { useAttendanceHistory } from '@/hooks/useAdmin'
 import { AttendanceHistoryItemType } from '@/schemas/admin.shema'
 import { AttendanceStatus, AttendanceStatusLabels, Department, DepartmentLabels } from '@/constants/type'
 import { formatAttendanceTime } from '@/lib/utils'
+import { ExportExcelDialog } from '../../components/ExportExcelDialog'
 
 export default function AttendanceList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -118,14 +119,7 @@ export default function AttendanceList() {
                   <SelectItem value='absent'>{AttendanceStatusLabels[AttendanceStatus.Absent]}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline'>
-                <Filter className='mr-2 h-4 w-4' />
-                Lọc
-              </Button>
-              <Button variant='secondary'>
-                <Download className='mr-2 h-4 w-4' />
-                Xuất Excel
-              </Button>
+              <ExportExcelDialog />
             </div>
           </div>
         </CardHeader>

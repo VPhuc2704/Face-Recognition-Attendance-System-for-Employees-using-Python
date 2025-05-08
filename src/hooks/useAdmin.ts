@@ -9,6 +9,14 @@ import {
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns'
 import { AttendanceStatus } from '@/constants/type'
 
+// Hook để xuất file Excel
+export const useExportAttendanceExcel = () => {
+  return useMutation({
+    mutationFn: (params: { date?: string; fromDate?: string; toDate?: string }) =>
+      adminService.exportAttendanceExcel(params)
+  })
+}
+
 export const useAttendanceHistory = () => {
   return useQuery({
     queryKey: ['attendance-history'],
