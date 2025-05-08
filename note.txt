@@ -1,7 +1,0 @@
-quản lý state, contextapi dùng zustand
-api dùng tanktask query, 
-zod định dang dữ liệu
-
-tối ưu phần sidebar về 2 role
-
-phần hỏi, có db có profile của admin khong
