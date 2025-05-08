@@ -52,8 +52,17 @@ class AttendanceConfigView(APIView):
             serializer = AttendanceConfigSerializer(configTime)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Chưa có cấu hình thời gian."})
+            return Response({"message": "Chưa cấu hình thời gian check_in/checkout."})
     def post(self, request):
+        check_in_time = request.data.get('check_in_time')
+        check_out_time = request.data.get('check_out_time')
+        if not check_in_time or not check_out_time:
+            return Response(
+                {
+                    "error": "Thiếu trường bắt buộc",
+                    "detail": "Cần cung cấp cả 'check_in_time' và 'check_out_time' ."
+                },
+            )
         serializer = AttendanceConfigSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -69,7 +78,20 @@ class AttendanceConfigView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+# Thêm các ánh xạ từ mã sang nhãn hiển thị
+DEPARTMENT_LABELS = {
+    'it': 'Công nghệ thông tin',
+    'hr': 'Nhân sự',
+    'accounting': 'Kế toán',
+    'marketing': 'Marketing',
+    'sales': 'Kinh doanh'
+}
 
+STATUS_LABELS = {
+    'Present': 'Đúng giờ',
+    'Absent': 'Vắng mặt',
+    'Late': 'Đi muộn'
+}
 class ExportAttendanceExcel(APIView):
     permission_classes = [IsAdminUser]
 
@@ -130,14 +152,24 @@ class ExportAttendanceExcel(APIView):
 
         for row_num, att in enumerate(attendances, start=4):
             fill = fill_even if row_num % 2 == 0 else fill_odd
+
+            # Lấy tên phòng ban và chuyển đổi sang nhãn hiển thị tiếng Việt
+            department_code = att.employeeId.department.name if att.employeeId.department else ''
+            department_name = DEPARTMENT_LABELS.get(department_code, department_code)
+            
+            # Chuyển đổi trạng thái sang nhãn hiển thị tiếng Việt
+            status_label = STATUS_LABELS.get(att.status, att.status)
+
             values = [
                 att.employeeId.employee_code,
                 att.employeeId.full_name(),
-                att.employeeId.department.name if att.employeeId.department else '',
+                # att.employeeId.department.name if att.employeeId.department else '',
+                department_name,
                 att.date.strftime("%d/%m/%Y"),
                 att.check_in.strftime("%H:%M:%S") if att.check_in else '',
                 att.check_out.strftime("%H:%M:%S") if att.check_out else '',
-                att.status,
+                # att.status,
+                status_label,
             ]
             for col_num, value in enumerate(values, 1):
                 cell = worksheet.cell(row=row_num, column=col_num, value=value)
