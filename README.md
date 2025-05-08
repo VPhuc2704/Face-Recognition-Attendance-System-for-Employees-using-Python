@@ -1,21 +1,21 @@
 Dưới đây là phần **Hướng dẫn chạy ứng dụng** bạn có thể thêm vào file README.md của dự án, được định dạng rõ ràng theo markdown:
 
 ```markdown
-## 🚀 Hướng Dẫn Cài Đặt và Chạy Ứng Dụng
+##  Hướng Dẫn Cài Đặt và Chạy Ứng Dụng
 
-### 📦 Yêu Cầu Hệ Thống
+### Yêu Cầu Hệ Thống
 - Python 3.9+
 - MySQL 8.0+
 - Django 4.2
 
-### 🔧 Cài Đặt Ban Đầu
+### Cài Đặt Ban Đầu
 1. **Clone repository**:
 git clone https://github.com/your-username/facetechs.git
 cd facetechs
 ```
 
 
-### 🛠 Cấu Hình Database
+### Cấu Hình Database
 1. Tạo database trong MySQL:
 ```sql
 CREATE DATABASE facetechDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -30,7 +30,7 @@ DB_HOST=localhost
 DB_PORT=3306
 ```
 
-### ▶️ Chạy Ứng Dụng
+### Chạy Ứng Dụng
 1. **Áp dụng migrations**:
 ```bash
 python manage.py makemigrations
@@ -49,11 +49,4 @@ python manage.py runserver
 
 Truy cập ứng dụng tại: http://localhost:8000
 
-### 🔐 API Endpoints Chính
-| Phương Thức | Endpoint                | Mô Tả                     |
-|-------------|-------------------------|---------------------------|
-| POST        | /api/auth/register      | Đăng ký người dùng        |
-| POST        | /api/auth/login         | Đăng nhập                 |
-| POST        | /api/auth/logout        | Đăng xuất                 |
-| GET         | /api/users/             | view user                 |
-| PORT        | /api/auth/token/refresh | cấp lại access            |
+
