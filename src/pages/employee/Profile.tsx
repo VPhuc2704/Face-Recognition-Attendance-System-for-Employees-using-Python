@@ -185,6 +185,10 @@ export default function Profile() {
             </CardHeader>
             <CardContent className='space-y-4'>
               <div>
+                <Label>Mã nhân viên</Label>
+                <p className='text-md mt-1 font-medium'>{profileData.employee_code || 'Chưa cấp'}</p>
+              </div>
+              <div>
                 <Label>Phòng ban</Label>
                 <p className='text-md mt-1 font-medium'>
                   {profileData.department?.name
@@ -199,10 +203,6 @@ export default function Profile() {
                     ? PositionLabels[profileData.position.name as PositionType] || profileData.position.name
                     : 'Chưa phân công'}
                 </p>
-              </div>
-              <div>
-                <Label>Mã nhân viên</Label>
-                <p className='text-md mt-1 font-medium'>{profileData.employee_code || 'Chưa cấp'}</p>
               </div>
               <div>
                 <Label>Ngày bắt đầu</Label>

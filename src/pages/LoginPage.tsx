@@ -71,7 +71,7 @@ export default function LoginPage() {
     <div className='flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4'>
       <Card className='w-full max-w-md shadow-lg'>
         <CardHeader className='text-center'>
-          <CardTitle className='text-2xl font-bold'>Face Recognition Attendance System</CardTitle>
+          <CardTitle className='text-2xl font-bold'>Hệ Thống Điểm Danh Nhân Viên Bằng Nhận Diện Khuôn Mặt</CardTitle>
           <CardDescription>Đăng nhập để tiếp tục</CardDescription>
         </CardHeader>
         <CardContent>
@@ -194,7 +194,7 @@ export default function LoginPage() {
           </Tabs>
         </CardContent>
         <CardFooter className='flex justify-center border-t pt-4'>
-          <p className='text-xs text-gray-500'>© 2025 Face Recognition Attendance System</p>
+          <p className='text-xs text-gray-500'>© 2025 FaceTech</p>
         </CardFooter>
       </Card>
     </div>
