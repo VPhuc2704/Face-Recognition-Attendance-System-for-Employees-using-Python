@@ -116,6 +116,15 @@ class FaceRecognitionView(APIView):
             if recognized_id:
                 try:
                     employee = Employee.objects.get(id=recognized_id)
+                    # Kiểm tra trạng thái nhân viên
+                    if employee.status != "Active":
+                        return JsonResponse(
+                            {
+                                "status": "error",
+                                "message": f"{employee.full_name()} đã nghĩ việc nên không được phép check_in/out",
+                            },
+                        )
+
                     action = request.data.get("action", "")
                     if action not in ["check_in", "check_out"]:
                         return JsonResponse(
