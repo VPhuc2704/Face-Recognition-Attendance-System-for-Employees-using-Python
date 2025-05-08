@@ -14,7 +14,7 @@ import { useAttendanceHistory } from '@/hooks/useAdmin'
 import { AttendanceHistoryItemType } from '@/schemas/admin.shema'
 import { AttendanceStatus, AttendanceStatusLabels, Department, DepartmentLabels } from '@/constants/type'
 import { formatAttendanceTime } from '@/lib/utils'
-import { ExportExcelDialog } from './components/ExportExcelDialog'
+import { ExportExcelDialog } from '../../components/ExportExcelDialog'
 
 export default function AttendanceList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -119,10 +119,6 @@ export default function AttendanceList() {
                   <SelectItem value='absent'>{AttendanceStatusLabels[AttendanceStatus.Absent]}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline'>
-                <Filter className='mr-2 h-4 w-4' />
-                Lọc
-              </Button>
               <ExportExcelDialog />
             </div>
           </div>
