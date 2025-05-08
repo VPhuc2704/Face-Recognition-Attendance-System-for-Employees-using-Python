@@ -9,12 +9,13 @@ import { Calendar } from '@/components/ui/calendar'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { Search, Calendar as CalendarIcon, Filter, Loader2 } from 'lucide-react'
-import { useAttendanceHistory } from '@/hooks/useAdmin'
+import { Search, Calendar as CalendarIcon, Loader2 } from 'lucide-react'
+import { useAttendanceConfig, useAttendanceHistory } from '@/hooks/useAdmin'
 import { AttendanceHistoryItemType } from '@/schemas/admin.shema'
 import { AttendanceStatus, AttendanceStatusLabels, Department, DepartmentLabels } from '@/constants/type'
 import { formatAttendanceTime } from '@/lib/utils'
 import { ExportExcelDialog } from '../../components/ExportExcelDialog'
+import { AttendanceConfigDialog } from '@/components/AttendanceConfigDialog'
 
 export default function AttendanceList() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -24,6 +25,9 @@ export default function AttendanceList() {
 
   // Gọi API lấy dữ liệu điểm danh
   const { data: attendanceData, isLoading, isError } = useAttendanceHistory()
+
+  // Lấy thông tin cấu hình giờ điểm danh hiện tại
+  const { data: configData } = useAttendanceConfig()
 
   const filteredAttendance =
     attendanceData?.filter((record: AttendanceHistoryItemType) => {
@@ -64,6 +68,33 @@ export default function AttendanceList() {
       <div className='mb-6'>
         <h1 className='text-2xl font-bold tracking-tight'>Lịch sử điểm danh</h1>
         <p className='text-muted-foreground'>Xem và quản lý lịch sử điểm danh của nhân viên theo ngày.</p>
+      </div>
+
+      {/* Hiển thị thông tin cấu hình giờ điểm danh hiện tại */}
+      <div className='mb-6'>
+        <Card>
+          <CardHeader className='pb-3'>
+            <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-2'>
+              <div>
+                <CardTitle>Cấu hình giờ điểm danh</CardTitle>
+                <CardDescription>Thiết lập giờ vào – ra cho nhân viên</CardDescription>
+              </div>
+              <AttendanceConfigDialog />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div>
+                <h3 className='text-sm font-medium'>Giờ vào</h3>
+                <p className='text-2xl font-bold'>{configData ? configData.check_in_time : 'Chưa thiết lập'}</p>
+              </div>
+              <div>
+                <h3 className='text-sm font-medium'>Giờ ra</h3>
+                <p className='text-2xl font-bold'>{configData ? configData.check_out_time : 'Chưa thiết lập'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
