@@ -1,6 +1,8 @@
 import { adminService } from '@/services/admin.service'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  AttendanceConfigFormValues,
+  AttendanceConfigType,
   AttendanceHistoryResponseType,
   CreateEmployeeFormValues,
   EmployeeListResponseType,
@@ -233,6 +235,41 @@ export const useDeleteEmployee = () => {
     onSuccess: () => {
       // Khi xóa nhân viên thành công, cập nhật lại danh sách nhân viên
       queryClient.invalidateQueries({ queryKey: ['employee-list'] })
+    }
+  })
+}
+
+// Hook để lấy cấu hình thời gian điểm danh
+export const useAttendanceConfig = () => {
+  return useQuery({
+    queryKey: ['attendance-config'],
+    queryFn: adminService.getAttendanceConfig,
+    refetchOnWindowFocus: false
+  })
+}
+
+// Hook để cập nhật cấu hình thời gian điểm danh
+export const useUpdateAttendanceConfig = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: AttendanceConfigFormValues) => adminService.updateAttendanceConfig(data),
+    onSuccess: () => {
+      // Khi cập nhật thành công, làm mới cache của cấu hình
+      queryClient.invalidateQueries({ queryKey: ['attendance-config'] })
+    }
+  })
+}
+
+// Hook để tạo mới cấu hình thời gian điểm danh
+export const useCreateAttendanceConfig = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: AttendanceConfigFormValues) => adminService.createAttendanceConfig(data),
+    onSuccess: () => {
+      // Khi tạo mới thành công, làm mới cache của cấu hình
+      queryClient.invalidateQueries({ queryKey: ['attendance-config'] })
     }
   })
 }

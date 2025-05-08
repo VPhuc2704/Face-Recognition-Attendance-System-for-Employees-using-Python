@@ -1,5 +1,8 @@
 import api from '@/api/axios'
 import {
+  AttendanceConfigFormValues,
+  AttendanceConfigSchema,
+  AttendanceConfigType,
   AttendanceHistoryResponseSchema,
   AttendanceHistoryResponseType,
   CreateEmployeeFormValues,
@@ -125,5 +128,42 @@ export const adminService = {
   deleteEmployee: async (id: number): Promise<{ message: string }> => {
     const res = await api.delete(`/admin/users/${id}`)
     return { message: 'Xóa nhân viên thành công' }
+  },
+
+  // Lấy thông tin cấu hình thời gian điểm danh hiện tại
+  getAttendanceConfig: async (): Promise<AttendanceConfigType | null> => {
+    try {
+      const res = await api.get('/attendance/config')
+
+      // Nếu không có cấu hình và server trả về message
+      if (res.data.message) {
+        return null
+      }
+
+      // Xác thực dữ liệu trả về
+      const parsed = AttendanceConfigSchema.parse(res.data)
+      return parsed
+    } catch (error) {
+      console.error('Lỗi khi lấy cấu hình thời gian điểm danh:', error)
+      return null
+    }
+  },
+
+  // Tạo mới cấu hình thời gian điểm danh
+  createAttendanceConfig: async (data: AttendanceConfigFormValues): Promise<AttendanceConfigType> => {
+    const res = await api.post('/attendance/config', data)
+
+    // Xác thực dữ liệu trả về
+    const parsed = AttendanceConfigSchema.parse(res.data)
+    return parsed
+  },
+
+  // Cập nhật cấu hình thời gian điểm danh
+  updateAttendanceConfig: async (data: AttendanceConfigFormValues): Promise<AttendanceConfigType> => {
+    const res = await api.put('/attendance/config', data)
+
+    // Xác thực dữ liệu trả về
+    const parsed = AttendanceConfigSchema.parse(res.data)
+    return parsed
   }
 }

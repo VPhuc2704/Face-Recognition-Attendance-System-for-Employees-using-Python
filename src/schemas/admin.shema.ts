@@ -141,3 +141,28 @@ export const CreateEmployeeResponseSchema = z.object({
 })
 
 export type CreateEmployeeResponseType = z.infer<typeof CreateEmployeeResponseSchema>
+
+// Schema cho AttendanceConfig
+export const AttendanceConfigSchema = z.object({
+  id: z.number(),
+  check_in_time: z.string().nullable(),
+  check_out_time: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string()
+})
+
+export type AttendanceConfigType = z.infer<typeof AttendanceConfigSchema>
+
+// Schema cho form cập nhật cấu hình điểm danh
+export const AttendanceConfigFormSchema = z.object({
+  check_in_time: z
+    .string()
+    .min(1, 'Thời gian check-in không được để trống')
+    .regex(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/, 'Định dạng thời gian không hợp lệ (HH:MM:SS)'),
+  check_out_time: z
+    .string()
+    .min(1, 'Thời gian check-out không được để trống')
+    .regex(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/, 'Định dạng thời gian không hợp lệ (HH:MM:SS)')
+})
+
+export type AttendanceConfigFormValues = z.infer<typeof AttendanceConfigFormSchema>
