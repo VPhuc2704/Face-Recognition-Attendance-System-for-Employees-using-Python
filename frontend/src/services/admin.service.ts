@@ -76,7 +76,7 @@ export const adminService = {
       }
     })
 
-    const res = await api.post('/admin/users/', formData, {
+    const res = await api.post('/admin/users', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

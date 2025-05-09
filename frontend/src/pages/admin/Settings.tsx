@@ -26,7 +26,7 @@ export default function Settings() {
           <Card>
             <CardHeader>
               <CardTitle>Thời gian làm việc</CardTitle>
-              <CardDescription>Cấu hình thời gian check-in và check-out cho nhân viên</CardDescription>
+              <CardDescription>Cấu hình thời gian ra - vào cho nhân viên</CardDescription>
             </CardHeader>
             <CardContent className='space-y-2'>
               <div className='space-y-1'>
@@ -36,7 +36,7 @@ export default function Settings() {
                       <Clock className='h-5 w-5 text-blue-600 dark:text-blue-400' />
                     </div>
                     <div>
-                      <h3 className='text-sm font-medium'>Giờ check-in</h3>
+                      <h3 className='text-sm font-medium'>Giờ vào</h3>
                       <p className='text-2xl font-bold'>{configData ? configData.check_in_time : 'Chưa thiết lập'}</p>
                     </div>
                   </div>
@@ -46,7 +46,7 @@ export default function Settings() {
                       <Clock className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
                     </div>
                     <div>
-                      <h3 className='text-sm font-medium'>Giờ check-out</h3>
+                      <h3 className='text-sm font-medium'>Giờ ra</h3>
                       <p className='text-2xl font-bold'>{configData ? configData.check_out_time : 'Chưa thiết lập'}</p>
                     </div>
                   </div>
