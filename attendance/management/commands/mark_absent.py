@@ -8,7 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         today = date.today()
-        all_employees = Employee.objects.all()
+        all_employees = Employee.objects.filter(status="Active")
         for employee in all_employees:
             if not Attendance.objects.filter(employeeId=employee, date=today).exists():
                 Attendance.objects.create(
