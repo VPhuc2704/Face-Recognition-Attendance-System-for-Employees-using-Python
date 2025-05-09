@@ -44,39 +44,7 @@ class AttendanceHistoryView(APIView):
             return Response(data)
         else:
             return Response(serializer.data)
-class AttendanceConfigView(APIView):
-    permission_classes = [IsAdminUser]
-    def get(self, request):
-        configTime = AttendanceConfig.objects.order_by("-created_at").first()
-        if configTime:
-            serializer = AttendanceConfigSerializer(configTime)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({"message": "Chưa cấu hình thời gian check_in/checkout."})
-    def post(self, request):
-        check_in_time = request.data.get('check_in_time')
-        check_out_time = request.data.get('check_out_time')
-        if not check_in_time or not check_out_time:
-            return Response(
-                {
-                    "error": "Thiếu trường bắt buộc",
-                    "detail": "Cần cung cấp cả 'check_in_time' và 'check_out_time' ."
-                },
-            )
-        serializer = AttendanceConfigSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status= status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    def put(self, request):
-        configTime = AttendanceConfig.objects.order_by("-created_at").first()
-        if not configTime:
-            return Response({"message": "Chưa có cấu hình thời gian."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = AttendanceConfigSerializer(configTime, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     
 # Thêm các ánh xạ từ mã sang nhãn hiển thị
 DEPARTMENT_LABELS = {
@@ -193,3 +161,36 @@ class ExportAttendanceExcel(APIView):
         response["Content-Disposition"] = 'attachment; filename="attendance_report.xlsx"'
         workbook.save(response)
         return response
+class AttendanceConfigView(APIView):
+    permission_classes = [IsAdminUser]
+    def get(self, request):
+        configTime = AttendanceConfig.objects.order_by("-created_at").first()
+        if configTime:
+            serializer = AttendanceConfigSerializer(configTime)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Chưa cấu hình thời gian check_in/checkout."})
+    def post(self, request):
+        check_in_time = request.data.get('check_in_time')
+        check_out_time = request.data.get('check_out_time')
+        if not check_in_time or not check_out_time:
+            return Response(
+                {
+                    "error": "Thiếu trường bắt buộc",
+                    "detail": "Cần cung cấp cả 'check_in_time' và 'check_out_time' ."
+                },
+            )
+        serializer = AttendanceConfigSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status= status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request):
+        configTime = AttendanceConfig.objects.order_by("-created_at").first()
+        if not configTime:
+            return Response({"message": "Chưa có cấu hình thời gian."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AttendanceConfigSerializer(configTime, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

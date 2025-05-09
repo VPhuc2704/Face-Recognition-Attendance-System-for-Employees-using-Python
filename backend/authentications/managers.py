@@ -16,11 +16,11 @@ class UserManager(BaseUserManager):
             email = self.normalize_email(email)
             self.email_validator(email)
         else:
-            raise ValueError(_("Email is required"))
+            raise ValueError(_("Email là trường bắt buộc"))
         if not firstName:
-            raise ValueError(_("First name is required"))
+            raise ValueError(_("First là trường bắt buộc"))
         if not lastName:
-            raise ValueError(_("Last name is required"))
+            raise ValueError(_("Last là trường bắt buộc"))
         user = self.model(
             email=email,
             firstName=firstName,
