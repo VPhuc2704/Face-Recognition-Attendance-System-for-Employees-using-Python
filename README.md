@@ -1,111 +1,97 @@
-# React + TypeScript + Vite
+# Face Recognition Attendance System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hệ thống điểm danh nhân viên bằng nhận diện khuôn mặt, giúp tự động hóa quy trình điểm danh, nâng cao hiệu quả quản lý nhân sự và đảm bảo tính minh bạch, chính xác.
 
-Currently, two official plugins are available:
+## Tính năng chính
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Đăng ký, quản lý thông tin nhân viên
+- Điểm danh tự động bằng nhận diện khuôn mặt (Face Recognition)
+- Quản lý lịch sử điểm danh, xuất báo cáo
+- Phân quyền quản trị viên và nhân viên
 
-## Expanding the ESLint configuration
+## Công nghệ sử dụng
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Backend:** Python, Django, Django REST Framework, MySQL
+- **Frontend:** React (Vite, TypeScript), TailwindCSS
+- **Nhận diện khuôn mặt:** OpenCV, dlib/face_recognition
+- **Triển khai:** Docker, Docker Compose
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## Hướng dẫn cài đặt & chạy ứng dụng
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Yêu cầu hệ thống
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
-create frontend/.env
-```js
-VITE_API_URL=http://localhost:8000/api
-VITE_MEDIA_URL=http://localhost:8000
-```
-=======
-Dưới đây là phần **Hướng dẫn chạy ứng dụng** bạn có thể thêm vào file README.md của dự án, được định dạng rõ ràng theo markdown:
-
-```markdown
-##  Hướng Dẫn Cài Đặt và Chạy Ứng Dụng
-
-### Yêu Cầu Hệ Thống
 - Python 3.9+
+- Node.js 16+
 - MySQL 8.0+
-- Django 4.2
 
-### Cài Đặt Ban Đầu
-1. **Clone repository**:
-git clone https://github.com/your-username/facetechs.git
-cd facetechs
-```
+### Cài đặt thủ công
 
+#### 1. Backend
 
-### Cấu Hình Database
-1. Tạo database trong MySQL:
-```sql
-CREATE DATABASE facetechDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-2. Cập nhật thông tin database trong file `.env` (tạo mới nếu chưa có):
-```ini
-DB_NAME=facetechDB
-DB_USER=root
-DB_PASSWORD="password"
-DB_HOST=localhost
-DB_PORT=3306
-```
-
-### Chạy Ứng Dụng
-1. **Áp dụng migrations**:
 ```bash
-python manage.py makemigrations
-python manage.py migrate
+cd backend
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
+pip install -r requirements.txt
 ```
 
-2. **Tạo superuser (quản trị viên)**:
+- Tạo database MySQL và cập nhật file `.env`:
+  ```ini
+  DB_NAME=facetechDB
+  DB_USER=root
+  DB_PASSWORD=your_password
+  DB_HOST=localhost
+  DB_PORT=3306
+  ```
+
+- Chạy migrations và tạo tài khoản quản trị:
+  ```bash
+  python manage.py makemigrations
+  python manage.py migrate
+  python manage.py createsuperuser
+  ```
+
+- Khởi động server:
+  ```bash
+  python manage.py runserver
+  ```
+
+#### 2. Frontend
+
 ```bash
-python manage.py createsuperuser
+cd frontend
+npm install
+npm run dev
 ```
 
-3. **Khởi động server**:
-```bash
-python manage.py runserver
-```
+- Ứng dụng sẽ chạy tại:  
+  - Backend: http://localhost:8000  
+  - Frontend: http://localhost:3000
 
-Truy cập ứng dụng tại: http://localhost:8000
+## Hướng dẫn nhanh để chạy dự án
+
+1. **Clone repository về máy:**
+   ```bash
+   git clone https://github.com/VPhuc2704/Face-Recognition-Attendance-System-for-Employees-using-Python.git
+   cd Face-Recognition-Attendance-System-for-Employees-using-Python
+   ```
+
+2. **Cài đặt backend và frontend:**
+   - Làm theo hướng dẫn ở mục "Cài đặt thủ công" phía trên cho backend và frontend.
+
+3. **Tài khoản quản trị:**
+   - Sau khi migrate, tạo superuser bằng lệnh:
+     ```bash
+     python manage.py createsuperuser
+     ```
+
+4. **Cấu hình file môi trường:**
+   - Đảm bảo đã tạo file `.env` cho backend với thông tin database như hướng dẫn.
+   - Tạo file `frontend/.env` với nội dung:
+     ```env
+     VITE_API_URL=http://localhost:8000/api
+     VITE_MEDIA_URL=http://localhost:8000
+     ```
+
 
